@@ -103,6 +103,8 @@ fpkmGene$race <- ifelse(is.na(fpkmGene$race), fpkmGene$subtype_Race, fpkm$race)
 fpkmGene <- select(fpkmGene, -subtype_Race)
 # force race to factor
 fpkmGene$race <- as.factor(fpkmGene$race)
+# save aggregated data to file
+write.csv(fpkmGene, "targetGeneData.csv")
   
 ## visualizing data distribution
 hist(fpkmGene$TFAM)
