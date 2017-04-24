@@ -10,7 +10,7 @@ library(dplyr)
 # view data available for prostate cancer (TCGA-PRAD)
 TCGAbiolinks:::getProjectSummary("TCGA-PRAD")
 
-## clinical data
+## clinical data (incomplete compared to metadata with Gene Expression?)
 # download and parse clinical data directly from TCGA
 clinical <- GDCquery_clinic(project = "TCGA-PRAD", type = "clinical")
 
@@ -21,7 +21,6 @@ table(clinical$vital_status) # 490 alive, 10 dead
 table(clinical$morphology) 
 clinical$days_to_death
 clinical$bcr_patient_barcode # patient 
-clinical$
 
 ## FPKM expression data (includes clinical metadata)
 ## aligned against Hg38
@@ -36,7 +35,7 @@ clinical$
 #GDCdownload(query_fpkm)
 # read downloaded data
 #fpkm <- GDCprepare(query_fpkm)
-# read downloaded data as data frame
+# read downloaded data as data frame (adds numbers to gene names)
 #fpkmDF <- GDCprepare(query_fpkm, summarizedExperiment = FALSE)
 # save imported object to file
 #save(fpkm, file="GDCdata/fpkm.RData")
@@ -47,54 +46,129 @@ load("GDCdata/fpkm.RData")
 load("GDCdata/fpkmDF.RData")
 fpkm
 
-# show metadata
-colData(fpkm)
+# clinical metadata included (all samples, not individual)
+table(fpkm$bcr_patient_barcode) # patient identifier
+table(fpkm$race) # 190 white, 11 black, 2 asian, 348 not reported
+table(fpkm$vital_status) # 541 alive, 10 dead
+fpkm$days_to_death
+table(fpkm$morphology) 
+table(fpkm$shortLetterCode) # TP (Primary solid Tumor), NT (Solid Tissue Normal), TM (Metastatic); codes from fpkm$definition
+table(fpkm$subtype_Race)
+fpkm$subtype_Tumor_cellularity_pathology
+table(fpkm$subtype_Reviewed_Gleason)
+table(fpkm$subtype_Reviewed_Gleason_category)
+table(fpkm$subtype_Reviewed_Gleason_sum) # prefer to subtype_Clinical_Gleason_sum
+table(fpkm$subtype_Clinical_Gleason_sum) 
 
-# clinical metadata included
-subtype_Race
-subtype_PSA_preop
-subtype_Tumor_cellularity_pathology
-subtype_Reviewed_Gleason
-subtype_Reviewed_Gleason_category
-subtype_Reviewed_Gleason_sum
-subtype_Clinical_Gleason_sum
-
-# subset by metadata categories
-fpkm[, fpkm$race == "white"]
-fpkm[, fpkm$subtype_Race == "WHITE"]
-
-# extract expression data (with seqnames, e.g., ENSG00000000003)
-assays(fpkm)$"HTSeq - FPKM"
-# show ranges
+# inspect object
+assayNames(fpkm)
+head(assay(fpkm), 1)
+colSums(assay(fpkm))
 rowRanges(fpkm)
+colData(fpkm) # metadata
 # show gene names
 rowRanges(fpkm)$external_gene_name
 # show ensembl_gene_id and external_gene_name
 rowData(fpkm)
 
-# TFAM: ENSG00000108064 (ENSG00000108064.9 in DF)
+##  assemble dataset for genes of interest and metadata
+fpkmDat <- as.data.frame(t(assays(fpkm)[[1]])) # extract expression data
+colnames(fpkmDat) # print gene names
+rownames(fpkmDat) # show sample names
+# extract gene data for target genes
+# TFAM: ENSG00000108064 
+# SPANXB1: ENSG00000227234
+fpkmGene <- fpkmDat %>%
+  select(ENSG00000108064, ENSG00000227234)
+# find average sample-wide expression
+colMeans(fpkmGene)
+# bind metadata to gene expression data
+fpkmGene <- cbind(fpkmGene, fpkm$bcr_patient_barcode, fpkm$race, fpkm$vital_status, fpkm$days_to_death, fpkm$morphology, fpkm$shortLetterCode, fpkm$subtype_Race, fpkm$subtype_Tumor_cellularity_pathology, fpkm$subtype_Reviewed_Gleason, fpkm$subtype_Reviewed_Gleason_category, fpkm$subtype_Reviewed_Gleason_sum)
+# replace column names
+colnames(fpkmGene) <- c("TFAM", "SPANXB1", "bcr_patient_barcode", "race", "vital_status", "days_to_death", "morphology", "shortLetterCode", "subtype_Race", "subtype_Tumor_cellularity_pathology", "subtype_Reviewed_Gleason", "subtype_Reviewed_Gleason_category", "subtype_Reviewed_Gleason_sum")
 
-tfam <- fpkmDF %>%
-  filter(X1 == "ENSG00000108064.9")
-names <- colnames(fpkmDF)
+## clean data
+# force Gleason to factor
+fpkmGene$subtype_Reviewed_Gleason_sum <- as.factor(fpkmGene$subtype_Reviewed_Gleason_sum)
+# normalize subtype_Race colum
+fpkmGene$subtype_Race <- gsub("WHITE", "white", fpkmGene$subtype_Race)
+fpkmGene$subtype_Race <- gsub("BLACK_OR_AFRICAN_AMERICAN", "black or african american", fpkmGene$subtype_Race)
+fpkmGene$subtype_Race <- gsub("BLACK OR AFRICAN AMERICAN", "black or african american", fpkmGene$subtype_Race)
+fpkmGene$subtype_Race <- gsub("ASIAN", "asian", fpkmGene$subtype_Race)
+# replace "not reported" in race column with NA
+fpkmGene$race[fpkmGene$race == "not reported"] <- NA
+# aggregate race columns 
+fpkmGene$race <- ifelse(is.na(fpkmGene$race), fpkmGene$subtype_Race, fpkm$race)
+# remove extraneous race column
+fpkmGene <- select(fpkmGene, -subtype_Race)
+# force race to factor
+fpkmGene$race <- as.factor(fpkmGene$race)
+  
+## visualizing data distribution
+hist(fpkmGene$TFAM)
+hist(fpkmGene$SPANXB1)
+plot(fpkmGene$race)
+plot(fpkmGene$morphology)
+plot(fpkmGene$subtype_Tumor_cellularity_pathology)
+plot(fpkmGene$subtype_Reviewed_Gleason)
+plot(fpkmGene$subtype_Reviewed_Gleason_category)
+plot(fpkmGene$subtype_Reviewed_Gleason_sum)
 
-
-
-# SPANXB1: ENSG00000227234 (ENSG00000227234.1 in DF)
+###########
 
 # FPKM-UQ expression data (includes clinical metadata)
 query_fpkmUQ <- GDCquery(project = "TCGA-PRAD", 
                          data.category = "Transcriptome Profiling",
                          data.type = "Gene Expression Quantification",
                          workflow.type = "HTSeq - FPKM-UQ")
+# download data
+#GDCdownload(query_fpkmUQ)
+# read downloaded data
+#fpkmUQ <- GDCprepare(query_fpkmUQ)
+# save imported object to file
+#save(fpkmUQ, file="GDCdata/fpkmUQ.RData")
 
+# load saved data
+load("GDCdata/fpkmUQ.RData")
+fpkmUQ
 
+# clinical metadata included (all samples, not individual)
+fpkmUQ$bcr_patient_barcode # patient 
+table(fpkmUQ$race) # 190 white, 11 black, 2 asian, 348 not reported
+table(fpkmUQ$vital_status) # 541 alive, 10 dead
+fpkmUQ$days_to_death
+table(fpkmUQ$morphology) 
+table(fpkmUQ$shortLetterCode) # TP (Primary solid Tumor), NT (Solid Tissue Normal), TM (Metastatic); codes from fpkmUQ$definition
+table(fpkmUQ$subtype_Race)
+fpkmUQ$subtype_Tumor_cellularity_pathology
+table(fpkmUQ$subtype_Reviewed_Gleason)
+table(fpkmUQ$subtype_Reviewed_Gleason_category)
+table(fpkmUQ$subtype_Reviewed_Gleason_sum) # prefer to subtype_Clinical_Gleason_sum
+table(fpkmUQ$subtype_Clinical_Gleason_sum) 
 
-## extra
-legacy <- GDCquery(project="TCGA-PRAD",
-                   data.category="Gene expression",
-                   data.type = "Gene Expression Quantification", 
-                   platform = "Illumina HiSeq", 
-                   file.type  = "normalized_results",
-                   experimental.strategy = "RNA-Seq",
-                   legacy = TRUE)
+# inspect object
+assayNames(fpkmUQ)
+head(assay(fpkmUQ), 1)
+colSums(assay(fpkmUQ))
+rowRanges(fpkmUQ)
+colData(fpkmUQ) # metadata
+# show gene names
+rowRanges(fpkmUQ)$external_gene_name
+# show ensembl_gene_id and external_gene_name
+rowData(fpkmUQ)
+
+# extract gene data for all 
+fpkmUQDat <- as.data.frame(t(assays(fpkmUQ)[[1]]))
+colnames(fpkmUQDat) # print gene names
+rownames(fpkmUQDat) # show sample names
+# extract gene data for target genes
+# TFAM: ENSG00000108064 
+# SPANXB1: ENSG00000227234
+fpkmUQGene <- fpkmUQDat %>%
+  select(ENSG00000108064, ENSG00000227234)
+# find average sample-wide expression
+colMeans(fpkmUQGene)
+# bind metadata to gene expression data
+fpkmUQGene <- cbind(fpkmUQGene, fpkmUQ$bcr_patient_barcode, fpkmUQ$race, fpkmUQ$vital_status, fpkmUQ$days_to_death, fpkmUQ$morphology, fpkmUQ$shortLetterCode, fpkmUQ$subtype_Race, fpkmUQ$subtype_Tumor_cellularity_pathology, fpkmUQ$subtype_Reviewed_Gleason, fpkmUQ$subtype_Reviewed_Gleason_category, fpkmUQ$subtype_Reviewed_Gleason_sum)
+# replace column names
+colnames(fpkmUQGene) <- c("TFAM", "SPANXB1", "bcr_patient_barcode", "race", "vital_status", "days_to_death", "morphology", "shortLetterCode", "subtype_Race", "subtype_Tumor_cellularity_pathology", "subtype_Reviewed_Gleason", "subtype_Reviewed_Gleason_category", "subtype_Reviewed_Gleason_sum")
