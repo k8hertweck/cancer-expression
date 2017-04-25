@@ -6,7 +6,6 @@ biocLite("TCGAbiolinks")
 library(TCGAbiolinks)
 library(SummarizedExperiment)
 library(dplyr)
-library(ggplot2)
 
 # view data available for prostate cancer (TCGA-PRAD)
 TCGAbiolinks:::getProjectSummary("TCGA-PRAD")
@@ -71,24 +70,41 @@ colData(fpkm) # metadata
 colnames(colData(fpkm)) # just metadata column names
 # show gene names
 rowRanges(fpkm)$external_gene_name
-# show ensembl_gene_id and external_gene_name
-rowData(fpkm)
+
+# extract genes of interest
+# create object of ensembl_gene_id and external_gene_name
+genes <-rowData(fpkm)
+# find TFAM
+tfam <- grep("TFAM$", genes$external_gene_name, perl = TRUE)
+genes[tfam, ]
+# TFAM = ENSG00000108064
+# find SPANX
+spanx <- grep("spanx", genes$external_gene_name, ignore.case = TRUE)
+genes[spanx, ]
+# SPANXA1 ENSG00000198021
+# SPANXA2 ENSG00000203926
+# SPANXA2-OT1 ENSG00000277215
+# SPANXB1 ENSG00000227234
+# SPANXC ENSG00000198573
+# SPANXD ENSG00000196406
 
 ##  assemble dataset for genes of interest and metadata
 fpkmDat <- as.data.frame(t(assays(fpkm)[[1]])) # extract expression data
 colnames(fpkmDat) # print gene names
 rownames(fpkmDat) # show sample names
 # extract gene data for target genes
-# TFAM: ENSG00000108064 
-# SPANXB1: ENSG00000227234
 fpkmGene <- fpkmDat %>%
-  select(ENSG00000108064, ENSG00000227234)
-# find average sample-wide expression
-colMeans(fpkmGene)
+  select(ENSG00000108064, ENSG00000198021, ENSG00000203926, ENSG00000277215, ENSG00000227234, ENSG00000198573, ENSG00000196406)
+# extract metadata
+metaDat <-as.data.frame(colData(fpkm))
 # bind metadata to gene expression data
-fpkmGene <- cbind(fpkmGene, fpkm$bcr_patient_barcode, fpkm$race, fpkm$vital_status, fpkm$days_to_death, fpkm$morphology, fpkm$shortLetterCode, fpkm$subtype_Race, fpkm$subtype_Tumor_cellularity_pathology, fpkm$subtype_Reviewed_Gleason, fpkm$subtype_Reviewed_Gleason_category, fpkm$subtype_Reviewed_Gleason_sum)
+fpkmGene <- cbind(fpkmGene, metaDat)
+# create object of gene names in order
+geneNames <- c("TFAM", "SPANXA1", "SPANXA2", "SPANXA2-OT1", "SPANXB1", "SPANXC", "SPANXD")
+# create object of metadata names
+metaNames <- colnames(colData(fpkm))
 # replace column names
-colnames(fpkmGene) <- c("TFAM", "SPANXB1", "bcr_patient_barcode", "race", "vital_status", "days_to_death", "morphology", "shortLetterCode", "subtype_Race", "subtype_Tumor_cellularity_pathology", "subtype_Reviewed_Gleason", "subtype_Reviewed_Gleason_category", "subtype_Reviewed_Gleason_sum")
+colnames(fpkmGene) <- c(geneNames, metaNames)
 
 ## clean data
 # normalize subtype_Race colum
@@ -102,30 +118,15 @@ fpkmGene$race[fpkmGene$race == "not reported"] <- NA
 fpkmGene$race <- ifelse(is.na(fpkmGene$race), fpkmGene$subtype_Race, fpkm$race)
 # remove extraneous race column
 fpkmGene <- select(fpkmGene, -subtype_Race)
+# check race column stats
+table(fpkmGene$race)
 # force race and Gleason to factor
 fpkmGene$race <- as.factor(fpkmGene$race)
 fpkmGene$subtype_Reviewed_Gleason_sum <- as.factor(fpkmGene$subtype_Reviewed_Gleason_sum)
-
-# incomplete metadata for: TCGA-HC-8260 (black), TCGA-HC-8262 (white)
-# add extra metadata for genetic variants
-
+# complete metadata for: TCGA-HC-8260 (black), TCGA-HC-8262 (white)
+fpkmGene$race <- ifelse(fpkmGene$bcr_patient_barcode == "TCGA-HC-8260", "black or african american", as.character(fpkmGene$race))
+fpkmGene$race <- ifelse(fpkmGene$bcr_patient_barcode == "TCGA-HC-8262", "white", as.character(fpkmGene$race))
+# remove troublesome metadata
+fpkmGene <- select(fpkmGene, -treatments)
 # save aggregated data to file
-write.csv(fpkmGene, "targetGeneData.csv")
-
-# read in saved data
-fpkmGene <- read.csv("targetGeneData.csv")
-fpkmGene <- select(fpkmGene, -subtype_Race)
-# force race and Gleason to factor
-fpkmGene$race <- as.factor(fpkmGene$race)
-fpkmGene$subtype_Reviewed_Gleason_sum <- as.factor(fpkmGene$subtype_Reviewed_Gleason_sum)  
-
-## visualizing data distribution
-hist(fpkmGene$TFAM)
-hist(fpkmGene$SPANXB1)
-plot(fpkmGene$race)
-plot(fpkmGene$morphology)
-plot(fpkmGene$shortLetterCode)
-plot(fpkmGene$subtype_Tumor_cellularity_pathology)
-plot(fpkmGene$subtype_Reviewed_Gleason)
-plot(fpkmGene$subtype_Reviewed_Gleason_category)
-plot(fpkmGene$subtype_Reviewed_Gleason_sum)
+write.table(fpkmGene, "targetGeneData.csv")
