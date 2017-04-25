@@ -61,6 +61,8 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
   geom_boxplot()
 ggsave("figures/SPANXB1paired.pdf")
 
+# add SPANXA2.OT1
+
 # does gene expression differ between white and AA?
 whiteVaa <- fpkmGene %>%
   filter(!is.na(fpkmGene$race)) %>% # remove missing data
@@ -105,7 +107,7 @@ ggplot(gleason, aes(subtype_Tumor_cellularity_pathology, TFAM)) +
 summary(aov(TFAM ~ subtype_Subtype, dat=gleason)) #p=0.818
 ggplot(gleason, aes(subtype_Subtype, TFAM)) + 
   geom_boxplot()
-summary(aov(TFAM ~ subtype_Residual_tumor, dat=gleason)) #p=0.313
+summary(aov(TFAM ~ subtype_Residual_tumor, dat=gleason)) #p=0.313; should remove NA
 ggplot(gleason, aes(subtype_Residual_tumor, TFAM)) + 
   geom_boxplot()
 summary(aov(TFAM ~ subtype_SCNA_cluster, dat=gleason)) #p=0.000859
@@ -128,11 +130,18 @@ ggplot(gleason, aes(subtype_Tumor_cellularity_pathology, SPANXB1)) +
 summary(aov(SPANXB1 ~ subtype_Subtype, dat=gleason)) #p=0.851
 ggplot(gleason, aes(subtype_Subtype, SPANXB1)) + 
   geom_boxplot()
-summary(aov(SPANXB1 ~ subtype_Residual_tumor, dat=gleason)) #p=0.315
+summary(aov(SPANXB1 ~ subtype_Residual_tumor, dat=gleason)) #p=0.315; should remove NA
 ggplot(gleason, aes(subtype_Residual_tumor, SPANXB1)) + 
   geom_boxplot()
 summary(aov(SPANXB1 ~ subtype_SCNA_cluster, dat=gleason)) #p=0.237
 ggplot(gleason, aes(subtype_SCNA_cluster, SPANXB1)) + 
   geom_boxplot()
 
-# is gene expression related to genetic variants(especially SPANXB1)?
+# is gene expression related to other expression or genetic variants?
+
+## TFAM
+# ETV1, ETV4
+
+## SPANXB1
+# methylation
+# ETV1, FLI1, FOXA1, MED12, ADH1. KMT2A, KMT2C
