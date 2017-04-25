@@ -5,8 +5,7 @@ library(dplyr)
 library(ggplot2)
 
 # read in saved data
-fpkmGene <- read.csv("targetGeneData.csv")
-fpkmGene <- select(fpkmGene, -subtype_Race)
+fpkmGene <- read.table("targetGeneData.csv")
 # force race and Gleason to factor
 fpkmGene$race <- as.factor(fpkmGene$race)
 fpkmGene$subtype_Reviewed_Gleason_sum <- as.factor(fpkmGene$subtype_Reviewed_Gleason_sum)  
@@ -24,18 +23,18 @@ plot(fpkmGene$subtype_Reviewed_Gleason_sum)
 
 ## statistical testing
 
-# does gene expression differ between normal and prostate?
+# does gene expression differ between normal and prostate? (unpaired)
 normVcancer <- filter(fpkmGene, shortLetterCode != "TM") # remove metastasis
 # TFAM unpaired, all data
-t.test(TFAM ~ shortLetterCode, data = normVcancer) # p=0.2911
+t.test(TFAM ~ shortLetterCode, data = normVcancer) # p=0.2191
 ggplot(normVcancer, aes(shortLetterCode, TFAM)) + 
   geom_boxplot()
 # SPANXB1 unpaired, all data
-t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=0.06523
+t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=0.0524
 ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) + 
   geom_boxplot()
 
-# paired samples
+# does gene expression differ between normal and prostate? (paired)
 normID <- normVcancer %>% # list normal samples
   filter(shortLetterCode == "NT") %>%
   select(bcr_patient_barcode)
@@ -43,60 +42,97 @@ normVcancerPaired <- normVcancer %>%
   filter(bcr_patient_barcode %in%
            normID$bcr_patient_barcode)
 # three samples (remove one): TCGA-HC-7740, TCGA-HC-8258
+filter(normVcancerPaired, patient == "TCGA-HC-7740")
+grep("TCGA-HC-7740", normVcancerPaired$patient) # 5 (tumor) 11 (tumor missing metadata) 89 (normal)
+filter(normVcancerPaired, patient == "TCGA-HC-8258")
+grep("TCGA-HC-8258", normVcancerPaired$patient) # 10 (tumor) 60 (tumor missing metadata) 91 (normal)
+# remove extra samples
+normVcancerPaired <- normVcancerPaired[-c(11, 60),]
+# TFAM paired
+t.test(TFAM ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.0009166
+t.test(TFAM ~ shortLetterCode, data = normVcancerPaired) # p=0.0008068
+ggplot(normVcancerPaired, aes(shortLetterCode, TFAM)) + 
+  geom_boxplot()
+ggsave("figures/TFAMpaired.pdf")
+# SPANXB1 paired
+t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.04633
+t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # p=0.04633
+ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
+  geom_boxplot()
+ggsave("figures/SPANXB1paired.pdf")
 
 # does gene expression differ between white and AA?
 whiteVaa <- fpkmGene %>%
   filter(!is.na(fpkmGene$race)) %>% # remove missing data
   filter(race != "asian") # remove asian
 # TFAM and race
-t.test(TFAM ~ race, data=whiteVaa) # p=0.7693
+t.test(TFAM ~ race, data=whiteVaa) # p=0.5297
 ggplot(whiteVaa, aes(race, TFAM)) + 
   geom_boxplot()
 # SPANXB1 and race
-t.test(SPANXB1 ~ race, data=whiteVaa) # p=0.8854
+t.test(SPANXB1 ~ race, data=whiteVaa) # p=0.9035
 ggplot(whiteVaa, aes(race, SPANXB1)) + 
   geom_boxplot()
 
 # is gene expression higher in deceased individuals?
 # TFAM and vital status
-t.test(TFAM ~ vital_status, data=fpkmGene) # p=0.1704
+t.test(TFAM ~ vital_status, data=fpkmGene) # p=0.2126
 ggplot(fpkmGene, aes(vital_status, TFAM)) + 
   geom_boxplot()
 # SPANXB1 and vital status
-t.test(SPANXB1 ~ vital_status, data=fpkmGene) # p=0.4386
+t.test(SPANXB1 ~ vital_status, data=fpkmGene) # p=0.4283
 ggplot(fpkmGene, aes(vital_status, SPANXB1)) + 
   geom_boxplot()
 
 # is gene expression related to tumor progression?
 gleason <- fpkmGene %>%
   filter(!is.na(subtype_Reviewed_Gleason_sum))
-# TFAM anova for Gleason
-summary(aov(TFAM ~ subtype_Reviewed_Gleason_sum, dat=gleason)) #p=2.49e-05
+# TFAM 
+summary(aov(TFAM ~ subtype_Reviewed_Gleason_sum, dat=gleason)) #p=0.000164
 ggplot(gleason, aes(subtype_Reviewed_Gleason_sum, TFAM)) + 
   geom_boxplot()
 ggsave("figures/TFAM_GleasonSum.pdf")
-summary(aov(TFAM ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.00199
+summary(aov(TFAM ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.0105
 ggplot(gleason, aes(subtype_Reviewed_Gleason, TFAM)) + 
   geom_boxplot()
 ggsave("figures/TFAM_Gleason.pdf")
-summary(aov(TFAM ~ morphology, dat=gleason)) #p=2.95e-08
+summary(aov(TFAM ~ morphology, dat=gleason)) #p=1.09e-07
 ggplot(gleason, aes(morphology, TFAM)) + 
   geom_boxplot()
-summary(aov(TFAM ~ subtype_Tumor_cellularity_pathology, dat=gleason)) #p=0.00876
+summary(aov(TFAM ~ subtype_Tumor_cellularity_pathology, dat=gleason)) #p=0.00391
 ggplot(gleason, aes(subtype_Tumor_cellularity_pathology, TFAM)) + 
   geom_boxplot()
-# SPANXB1 anova Gleason sum
-summary(aov(SPANXB1 ~ subtype_Reviewed_Gleason_sum, dat=gleason)) #p=0.735
+summary(aov(TFAM ~ subtype_Subtype, dat=gleason)) #p=0.818
+ggplot(gleason, aes(subtype_Subtype, TFAM)) + 
+  geom_boxplot()
+summary(aov(TFAM ~ subtype_Residual_tumor, dat=gleason)) #p=0.313
+ggplot(gleason, aes(subtype_Residual_tumor, TFAM)) + 
+  geom_boxplot()
+summary(aov(TFAM ~ subtype_SCNA_cluster, dat=gleason)) #p=0.000859
+ggplot(gleason, aes(subtype_SCNA_cluster, TFAM)) + 
+  geom_boxplot()
+
+# SPANXB1 
+summary(aov(SPANXB1 ~ subtype_Reviewed_Gleason_sum, dat=gleason)) #p=0.716
 ggplot(gleason, aes(subtype_Reviewed_Gleason_sum, SPANXB1)) + 
   geom_boxplot()
-summary(aov(SPANXB1 ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.878
+summary(aov(SPANXB1 ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.863
 ggplot(gleason, aes(subtype_Reviewed_Gleason, SPANXB1)) + 
   geom_boxplot()
-summary(aov(SPANXB1 ~ morphology, dat=gleason)) #p=2.09e-07
+summary(aov(SPANXB1 ~ morphology, dat=gleason)) #p=3.54e-07
 ggplot(gleason, aes(morphology, SPANXB1)) + 
   geom_boxplot() # 8255/3 only has two data points
 summary(aov(SPANXB1 ~ subtype_Tumor_cellularity_pathology, dat=gleason)) #p=0.591
 ggplot(gleason, aes(subtype_Tumor_cellularity_pathology, SPANXB1)) + 
   geom_boxplot() 
+summary(aov(SPANXB1 ~ subtype_Subtype, dat=gleason)) #p=0.851
+ggplot(gleason, aes(subtype_Subtype, SPANXB1)) + 
+  geom_boxplot()
+summary(aov(SPANXB1 ~ subtype_Residual_tumor, dat=gleason)) #p=0.315
+ggplot(gleason, aes(subtype_Residual_tumor, SPANXB1)) + 
+  geom_boxplot()
+summary(aov(SPANXB1 ~ subtype_SCNA_cluster, dat=gleason)) #p=0.237
+ggplot(gleason, aes(subtype_SCNA_cluster, SPANXB1)) + 
+  geom_boxplot()
 
 # is gene expression related to genetic variants(especially SPANXB1)?
