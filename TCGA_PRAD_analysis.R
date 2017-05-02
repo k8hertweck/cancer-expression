@@ -48,17 +48,27 @@ filter(normVcancerPaired, patient == "TCGA-HC-8258")
 grep("TCGA-HC-8258", normVcancerPaired$patient) # 10 (tumor) 60 (tumor missing metadata) 91 (normal)
 # remove extra samples
 normVcancerPaired <- normVcancerPaired[-c(11, 60),]
+# summarize sample counts
+table(normVcancerPaired$shortLetterCode) # 52 NT, 52 TP
 # TFAM paired
 t.test(TFAM ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.0009166
 t.test(TFAM ~ shortLetterCode, data = normVcancerPaired) # p=0.0008068
 ggplot(normVcancerPaired, aes(shortLetterCode, TFAM)) + 
-  geom_boxplot()
+  ylab("TFAM expression") +
+  xlab("tissue type (paired samples)") +
+  scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
+  geom_boxplot() +
+  theme_bw()
 ggsave("figures/TFAMpaired.jpg")
 # SPANXB1 paired
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.04633
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # p=0.04633
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
-  geom_boxplot()
+  ylab("SPANXB1 expression") +
+  xlab("tissue type (paired samples)") +
+  scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
+  geom_boxplot() +
+  theme_bw()
 ggsave("figures/SPANXB1paired.jpg")
 
 # add SPANXA2.OT1
@@ -70,33 +80,56 @@ whiteVaa <- fpkmGene %>%
 # TFAM and race
 t.test(TFAM ~ race, data=whiteVaa) # p=0.5297
 ggplot(whiteVaa, aes(race, TFAM)) + 
-  geom_boxplot()
+  ylab("TFAM expression") +
+  xlab("race") +
+  geom_boxplot() +
+  theme_bw()
 # SPANXB1 and race
 t.test(SPANXB1 ~ race, data=whiteVaa) # p=0.9035
 ggplot(whiteVaa, aes(race, SPANXB1)) + 
-  geom_boxplot()
+  ylab("SPANXB1 expression") +
+  xlab("race") +
+  geom_boxplot() +
+  theme_bw()
 
 # is gene expression higher in deceased individuals?
+table(fpkmGene$vital_status) # 541 alive, 10 dead
 # TFAM and vital status
 t.test(TFAM ~ vital_status, data=fpkmGene) # p=0.2126
 ggplot(fpkmGene, aes(vital_status, TFAM)) + 
-  geom_boxplot()
+  ylab("TFAM expression") +
+  xlab("vital status") +
+  geom_boxplot() +
+  theme_bw()
 # SPANXB1 and vital status
 t.test(SPANXB1 ~ vital_status, data=fpkmGene) # p=0.4283
 ggplot(fpkmGene, aes(vital_status, SPANXB1)) + 
-  geom_boxplot()
+  ylab("SPANXB1 expression") +
+  xlab("vital status") +
+  geom_boxplot() +
+  theme_bw()
 
 # is gene expression related to tumor progression?
 gleason <- fpkmGene %>%
   filter(!is.na(subtype_Reviewed_Gleason_sum))
+# summarize counts
+table(gleason$subtype_Reviewed_Gleason_sum) # 6=62, 7=172, 8=44, 9=41, 10=1 person
+table(gleason$subtype_Reviewed_Gleason)
+table(gleason$morphology)
 # TFAM 
 summary(aov(TFAM ~ subtype_Reviewed_Gleason_sum, dat=gleason)) #p=0.000164
 ggplot(gleason, aes(subtype_Reviewed_Gleason_sum, TFAM)) + 
-  geom_boxplot()
+  ylab("TFAM expression") +
+  xlab("Gleason score") +
+  geom_boxplot() +
+  theme_bw()
 ggsave("figures/TFAM_GleasonSum.jpg")
 summary(aov(TFAM ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.0105
 ggplot(gleason, aes(subtype_Reviewed_Gleason, TFAM)) + 
-  geom_boxplot()
+  ylab("TFAM expression") +
+  xlab("Gleason score") +
+  geom_boxplot() +
+  theme_bw()
 ggsave("figures/TFAM_Gleason.jpg")
 summary(aov(TFAM ~ morphology, dat=gleason)) #p=1.09e-07
 ggplot(gleason, aes(morphology, TFAM)) + 
