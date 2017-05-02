@@ -53,13 +53,13 @@ t.test(TFAM ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.0009
 t.test(TFAM ~ shortLetterCode, data = normVcancerPaired) # p=0.0008068
 ggplot(normVcancerPaired, aes(shortLetterCode, TFAM)) + 
   geom_boxplot()
-ggsave("figures/TFAMpaired.pdf")
+ggsave("figures/TFAMpaired.jpg")
 # SPANXB1 paired
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.04633
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # p=0.04633
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
   geom_boxplot()
-ggsave("figures/SPANXB1paired.pdf")
+ggsave("figures/SPANXB1paired.jpg")
 
 # add SPANXA2.OT1
 
@@ -93,11 +93,11 @@ gleason <- fpkmGene %>%
 summary(aov(TFAM ~ subtype_Reviewed_Gleason_sum, dat=gleason)) #p=0.000164
 ggplot(gleason, aes(subtype_Reviewed_Gleason_sum, TFAM)) + 
   geom_boxplot()
-ggsave("figures/TFAM_GleasonSum.pdf")
+ggsave("figures/TFAM_GleasonSum.jpg")
 summary(aov(TFAM ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.0105
 ggplot(gleason, aes(subtype_Reviewed_Gleason, TFAM)) + 
   geom_boxplot()
-ggsave("figures/TFAM_Gleason.pdf")
+ggsave("figures/TFAM_Gleason.jpg")
 summary(aov(TFAM ~ morphology, dat=gleason)) #p=1.09e-07
 ggplot(gleason, aes(morphology, TFAM)) + 
   geom_boxplot()
