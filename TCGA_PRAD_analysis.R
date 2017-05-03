@@ -27,12 +27,29 @@ plot(fpkmGene$subtype_Reviewed_Gleason_sum)
 normVcancer <- filter(fpkmGene, shortLetterCode != "TM") # remove metastasis
 # TFAM unpaired, all data
 t.test(TFAM ~ shortLetterCode, data = normVcancer) # p=0.2191
+table(normVcancer$shortLetterCode) # 52 normal, 498 tumor
 ggplot(normVcancer, aes(shortLetterCode, TFAM)) + 
-  geom_boxplot()
+  geom_boxplot() +
+  ylab("TFAM expression") +
+  xlab("tissue type (unpaired)") +
+  scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
+  geom_boxplot() +
+  theme_bw() + 
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/TFAMunpaired.jpg")
 # SPANXB1 unpaired, all data
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=0.0524
+SB1 <- normVcancer %>%
+  filter(SPANXB1 > 0) # 19 samples with SPANXB1 expression, all tumor
 ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) + 
-  geom_boxplot()
+  geom_boxplot() +
+  ylab("SPANXB1 expression") +
+  xlab("tissue type (unpaired)") +
+  scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
+  geom_boxplot() +
+  theme_bw() + 
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1unpaired.jpg")
 
 # does gene expression differ between normal and prostate? (paired)
 normID <- normVcancer %>% # list normal samples
@@ -58,17 +75,21 @@ ggplot(normVcancerPaired, aes(shortLetterCode, TFAM)) +
   xlab("tissue type (paired samples)") +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
-  theme_bw()
+  theme_bw() + 
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAMpaired.jpg")
 # SPANXB1 paired
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.04633
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # p=0.04633
+normVcancerPaired %>%
+  filter(SPANXB1 > 0) # only four samples with expression
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
   ylab("SPANXB1 expression") +
   xlab("tissue type (paired samples)") +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/SPANXB1paired.jpg")
 
 # add SPANXA2.OT1
@@ -77,20 +98,25 @@ ggsave("figures/SPANXB1paired.jpg")
 whiteVaa <- fpkmGene %>%
   filter(!is.na(fpkmGene$race)) %>% # remove missing data
   filter(race != "asian") # remove asian
+table(whiteVaa$race) # 28 AA, 218 white
 # TFAM and race
 t.test(TFAM ~ race, data=whiteVaa) # p=0.5297
 ggplot(whiteVaa, aes(race, TFAM)) + 
   ylab("TFAM expression") +
   xlab("race") +
   geom_boxplot() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/TFAMrace.jpg")
 # SPANXB1 and race
 t.test(SPANXB1 ~ race, data=whiteVaa) # p=0.9035
 ggplot(whiteVaa, aes(race, SPANXB1)) + 
   ylab("SPANXB1 expression") +
   xlab("race") +
   geom_boxplot() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1race.jpg")
 
 # is gene expression higher in deceased individuals?
 table(fpkmGene$vital_status) # 541 alive, 10 dead
@@ -107,7 +133,8 @@ ggplot(fpkmGene, aes(vital_status, SPANXB1)) +
   ylab("SPANXB1 expression") +
   xlab("vital status") +
   geom_boxplot() +
-  theme_bw()
+  theme_bw()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 
 # is gene expression related to tumor progression?
 gleason <- fpkmGene %>%
@@ -122,14 +149,16 @@ ggplot(gleason, aes(subtype_Reviewed_Gleason_sum, TFAM)) +
   ylab("TFAM expression") +
   xlab("Gleason score") +
   geom_boxplot() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAM_GleasonSum.jpg")
 summary(aov(TFAM ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.0105
 ggplot(gleason, aes(subtype_Reviewed_Gleason, TFAM)) + 
   ylab("TFAM expression") +
   xlab("Gleason score") +
   geom_boxplot() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAM_Gleason.jpg")
 summary(aov(TFAM ~ morphology, dat=gleason)) #p=1.09e-07
 ggplot(gleason, aes(morphology, TFAM)) + 
