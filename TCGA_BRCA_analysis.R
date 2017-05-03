@@ -66,7 +66,7 @@ grep("TCGA-A7-A13E", normVcancerPaired$patient) # remove 213 and 220 (extra tumo
 # remove extra samples
 normVcancerPaired <- normVcancerPaired[-c(145, 123, 201, 60, 213, 220),]
 # summarize sample counts
-table(normVcancerPaired$shortLetterCode) # 52 NT, 52 TP
+table(normVcancerPaired$shortLetterCode) # 112 NT, 112 TP
 # SPANXB1 paired
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.0007278
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # 0.0006777
