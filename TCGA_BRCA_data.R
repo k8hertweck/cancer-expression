@@ -25,7 +25,7 @@ clinical$bcr_patient_barcode # patient
 ## FPKM expression data normalized for upper quartile (includes clinical metadata)
 ## aligned against Hg38
 
-# data preparation and download (if fpkm.RData not in GDCdata/)
+# data preparation and download (if fpkmUQBca.RData not in GDCdata/)
 # identify desired data
 query_fpkm <- GDCquery(project = "TCGA-BRCA", 
                        data.category = "Transcriptome Profiling",
@@ -35,6 +35,7 @@ query_fpkm <- GDCquery(project = "TCGA-BRCA",
 GDCdownload(query_fpkm)
 # read downloaded data
 fpkm <- GDCprepare(query_fpkm)
+
 # save imported object to file
 save(fpkm, file="GDCdata/fpkmUQBca.RData")
 
@@ -62,9 +63,6 @@ rowRanges(fpkm)$external_gene_name
 # extract genes of interest
 # create object of ensembl_gene_id and external_gene_name
 genes <-rowData(fpkm)
-# find TFAM
-tfam <- grep("TFAM$", genes$external_gene_name, perl = TRUE)
-genes[tfam, ]
 # find SPANX
 spanx <- grep("spanx", genes$external_gene_name, ignore.case = TRUE)
 genes[spanx, ]
@@ -94,25 +92,6 @@ metaNames <- colnames(colData(fpkm))
 colnames(fpkmGene) <- c(geneNames, metaNames)
 
 ## clean data
-# normalize subtype_Race colum
-fpkmGene$subtype_Race <- gsub("WHITE", "white", fpkmGene$subtype_Race)
-fpkmGene$subtype_Race <- gsub("BLACK_OR_AFRICAN_AMERICAN", "black or african american", fpkmGene$subtype_Race)
-fpkmGene$subtype_Race <- gsub("BLACK OR AFRICAN AMERICAN", "black or african american", fpkmGene$subtype_Race)
-fpkmGene$subtype_Race <- gsub("ASIAN", "asian", fpkmGene$subtype_Race)
-# replace "not reported" in race column with NA
-fpkmGene$race[fpkmGene$race == "not reported"] <- NA
-# aggregate race columns 
-fpkmGene$race <- ifelse(is.na(fpkmGene$race), fpkmGene$subtype_Race, fpkm$race)
-# remove extraneous race column
-fpkmGene <- select(fpkmGene, -subtype_Race)
-# check race column stats
-table(fpkmGene$race)
-# force race and Gleason to factor
-fpkmGene$race <- as.factor(fpkmGene$race)
-fpkmGene$subtype_Reviewed_Gleason_sum <- as.factor(fpkmGene$subtype_Reviewed_Gleason_sum)
-# complete metadata for: TCGA-HC-8260 (black), TCGA-HC-8262 (white)
-fpkmGene$race <- ifelse(fpkmGene$bcr_patient_barcode == "TCGA-HC-8260", "black or african american", as.character(fpkmGene$race))
-fpkmGene$race <- ifelse(fpkmGene$bcr_patient_barcode == "TCGA-HC-8262", "white", as.character(fpkmGene$race))
 # remove troublesome metadata
 fpkmGene <- select(fpkmGene, -treatments)
 # save aggregated data to file
