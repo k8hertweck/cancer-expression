@@ -97,10 +97,11 @@ ggsave("figures/SPANXB1paired.jpg")
 # does gene expression differ between white and AA?
 whiteVaa <- fpkmGene %>%
   filter(!is.na(fpkmGene$race)) %>% # remove missing data
-  filter(race != "asian") # remove asian
-table(whiteVaa$race) # 28 AA, 218 white
+  filter(race != "asian") %>% # remove asian
+  filter(shortLetterCode == "TP") # only tumor
+table(whiteVaa$race) # 23 AA, 175 white
 # TFAM and race
-t.test(TFAM ~ race, data=whiteVaa) # p=0.5297
+t.test(TFAM ~ race, data=whiteVaa) # p=0.3886
 ggplot(whiteVaa, aes(race, TFAM)) + 
   ylab("TFAM expression") +
   xlab("race") +
@@ -109,7 +110,7 @@ ggplot(whiteVaa, aes(race, TFAM)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAMrace.jpg")
 # SPANXB1 and race
-t.test(SPANXB1 ~ race, data=whiteVaa) # p=0.9035
+t.test(SPANXB1 ~ race, data=whiteVaa) # p=0.8875
 ggplot(whiteVaa, aes(race, SPANXB1)) + 
   ylab("SPANXB1 expression") +
   xlab("race") +
@@ -119,22 +120,27 @@ ggplot(whiteVaa, aes(race, SPANXB1)) +
 ggsave("figures/SPANXB1race.jpg")
 
 # is gene expression higher in deceased individuals?
-table(fpkmGene$vital_status) # 541 alive, 10 dead
-# TFAM and vital status
-t.test(TFAM ~ vital_status, data=fpkmGene) # p=0.2126
-ggplot(fpkmGene, aes(vital_status, TFAM)) + 
+vital <- fpkmGene %>%
+  filter(shortLetterCode == "TP")
+table(vital$vital_status) # 488 alive, 10 dead (all dead are tumor)
+# TFAM and vital status 
+t.test(TFAM ~ vital_status, data=vital) # p=0.2257
+ggplot(vital, aes(vital_status, TFAM)) + 
   ylab("TFAM expression") +
   xlab("vital status") +
   geom_boxplot() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/TFAMvital.jpg")
 # SPANXB1 and vital status
-t.test(SPANXB1 ~ vital_status, data=fpkmGene) # p=0.4283
-ggplot(fpkmGene, aes(vital_status, SPANXB1)) + 
+t.test(SPANXB1 ~ vital_status, data=vital) # p=0.4691
+ggplot(vital, aes(vital_status, SPANXB1)) + 
   ylab("SPANXB1 expression") +
   xlab("vital status") +
   geom_boxplot() +
   theme_bw()+
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1vital.jpg")
 
 # is gene expression related to tumor progression?
 gleason <- fpkmGene %>%
