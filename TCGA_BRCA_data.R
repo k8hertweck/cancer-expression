@@ -8,16 +8,16 @@ library(SummarizedExperiment)
 library(dplyr)
 
 # view data available for prostate cancer (TCGA-PRAD)
-TCGAbiolinks:::getProjectSummary("TCGA-PRAD")
+TCGAbiolinks:::getProjectSummary("TCGA-BRCA")
 
-## clinical data (incomplete compared to metadata with Gene Expression?)
+## clinical data 
 # download and parse clinical data directly from TCGA
-clinical <- GDCquery_clinic(project = "TCGA-PRAD", type = "clinical")
+clinical <- GDCquery_clinic(project = "TCGA-BRCA", type = "clinical")
 
 # inspecting variables of interest
 str(clinical) # 500 total records
-table(clinical$race) # 147 white, 7 black, 2 asian, 344 not reported
-table(clinical$vital_status) # 490 alive, 10 dead
+table(clinical$race) # XX white, X black, X asian, X not reported
+table(clinical$vital_status) # X alive, X dead
 table(clinical$morphology) 
 clinical$days_to_death
 clinical$bcr_patient_barcode # patient 
@@ -27,39 +27,27 @@ clinical$bcr_patient_barcode # patient
 
 # data preparation and download (if fpkm.RData not in GDCdata/)
 # identify desired data
-query_fpkm <- GDCquery(project = "TCGA-PRAD", 
-                      data.category = "Transcriptome Profiling",
-                      data.type = "Gene Expression Quantification", 
-                      workflow.type = "HTSeq - FPKM-UQ")
+query_fpkm <- GDCquery(project = "TCGA-BRCA", 
+                       data.category = "Transcriptome Profiling",
+                       data.type = "Gene Expression Quantification", 
+                       workflow.type = "HTSeq - FPKM-UQ")
 # download data
 GDCdownload(query_fpkm)
 # read downloaded data
 fpkm <- GDCprepare(query_fpkm)
 # save imported object to file
-save(fpkm, file="GDCdata/fpkmUQPca.RData")
-
-# read downloaded data as data frame (adds numbers to gene names)
-#fpkmDF <- GDCprepare(query_fpkm, summarizedExperiment = FALSE)
-#fpkmDFnoUQ.RData and fpkmNoUQ.RData are from non-normalized data (not included in git repo, code not shown)
+save(fpkm, file="GDCdata/fpkmUQBca.RData")
 
 # load saved data
-load("GDCdata/fpkmUQPca.RData")
-fpkm <- fpkmUQ
-rm(fpkmUQ)
+load("GDCdata/fpkmUQBca.RData")
 
 # clinical metadata included (all samples, not individual)
 table(fpkm$bcr_patient_barcode) # patient identifier
-table(fpkm$race) # 190 white, 11 black, 2 asian, 348 not reported
-table(fpkm$vital_status) # 541 alive, 10 dead
+table(fpkm$race) # X white, X black, X asian, X not reported
+table(fpkm$vital_status) # X alive, X dead
 fpkm$days_to_death
 table(fpkm$morphology) 
-table(fpkm$shortLetterCode) # 498 TP (Primary solid Tumor), 52 NT (Solid Tissue Normal), 1 TM (Metastatic); codes from fpkm$definition
-table(fpkm$subtype_Race)
-fpkm$subtype_Tumor_cellularity_pathology
-table(fpkm$subtype_Reviewed_Gleason)
-table(fpkm$subtype_Reviewed_Gleason_category)
-table(fpkm$subtype_Reviewed_Gleason_sum) # prefer to subtype_Clinical_Gleason_sum
-table(fpkm$subtype_Clinical_Gleason_sum) 
+table(fpkm$shortLetterCode) # X; codes from fpkm$definition
 
 # inspect object
 assayNames(fpkm)
@@ -77,7 +65,15 @@ genes <-rowData(fpkm)
 # find TFAM
 tfam <- grep("TFAM$", genes$external_gene_name, perl = TRUE)
 genes[tfam, ]
-# TFAM = ENSG00000108064
+# find SPANX
+spanx <- grep("spanx", genes$external_gene_name, ignore.case = TRUE)
+genes[spanx, ]
+# SPANXA1 ENSG00000198021
+# SPANXA2 ENSG00000203926
+# SPANXA2-OT1 ENSG00000277215
+# SPANXB1 ENSG00000227234
+# SPANXC ENSG00000198573
+# SPANXD ENSG00000196406
 
 ##  assemble dataset for genes of interest and metadata
 fpkmDat <- as.data.frame(t(assays(fpkm)[[1]])) # extract expression data
@@ -85,13 +81,13 @@ colnames(fpkmDat) # print gene names
 rownames(fpkmDat) # show sample names
 # extract gene data for target genes
 fpkmGene <- fpkmDat %>%
-  select(ENSG00000108064)
+  select(ENSG00000198021, ENSG00000203926, ENSG00000277215, ENSG00000227234, ENSG00000198573, ENSG00000196406)
 # extract metadata
 metaDat <-as.data.frame(colData(fpkm))
 # bind metadata to gene expression data
 fpkmGene <- cbind(fpkmGene, metaDat)
 # create object of gene names in order
-geneNames <- "TFAM"
+geneNames <- c("SPANXA1", "SPANXA2", "SPANXA2-OT1", "SPANXB1", "SPANXC", "SPANXD")
 # create object of metadata names
 metaNames <- colnames(colData(fpkm))
 # replace column names
@@ -120,4 +116,4 @@ fpkmGene$race <- ifelse(fpkmGene$bcr_patient_barcode == "TCGA-HC-8262", "white",
 # remove troublesome metadata
 fpkmGene <- select(fpkmGene, -treatments)
 # save aggregated data to file
-write.table(fpkmGene, "targetGenePca.csv")
+write.table(fpkmGene, "targetGeneBca.csv")

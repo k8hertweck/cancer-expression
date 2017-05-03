@@ -5,13 +5,14 @@ library(dplyr)
 library(ggplot2)
 
 # read in saved data
-fpkmGene <- read.table("targetGenePca.csv")
+fpkmGene <- read.table("targetGeneData.csv")
 # force race and Gleason to factor
 fpkmGene$race <- as.factor(fpkmGene$race)
 fpkmGene$subtype_Reviewed_Gleason_sum <- as.factor(fpkmGene$subtype_Reviewed_Gleason_sum)  
 
 ## visualizing data distribution
 hist(fpkmGene$TFAM)
+hist(fpkmGene$SPANXB1)
 plot(fpkmGene$race)
 plot(fpkmGene$morphology)
 plot(fpkmGene$shortLetterCode)
@@ -36,6 +37,19 @@ ggplot(normVcancer, aes(shortLetterCode, TFAM)) +
   theme_bw() + 
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAMunpaired.jpg")
+# SPANXB1 unpaired, all data
+t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=0.0524
+SB1 <- normVcancer %>%
+  filter(SPANXB1 > 0) # 19 samples with SPANXB1 expression, all tumor
+ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) + 
+  geom_boxplot() +
+  ylab("SPANXB1 expression") +
+  xlab("tissue type (unpaired)") +
+  scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
+  geom_boxplot() +
+  theme_bw() + 
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1unpaired.jpg")
 
 # does gene expression differ between normal and prostate? (paired)
 normID <- normVcancer %>% # list normal samples
@@ -64,6 +78,21 @@ ggplot(normVcancerPaired, aes(shortLetterCode, TFAM)) +
   theme_bw() + 
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAMpaired.jpg")
+# SPANXB1 paired
+t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.04633
+t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # p=0.04633
+normVcancerPaired %>%
+  filter(SPANXB1 > 0) # only four samples with expression
+ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("tissue type (paired samples)") +
+  scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1paired.jpg")
+
+# add SPANXA2.OT1
 
 # does gene expression differ between white and AA?
 whiteVaa <- fpkmGene %>%
@@ -80,6 +109,15 @@ ggplot(whiteVaa, aes(race, TFAM)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAMrace.jpg")
+# SPANXB1 and race
+t.test(SPANXB1 ~ race, data=whiteVaa) # p=0.8875
+ggplot(whiteVaa, aes(race, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("race") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1race.jpg")
 
 # is gene expression higher in deceased individuals?
 vital <- fpkmGene %>%
@@ -94,6 +132,15 @@ ggplot(vital, aes(vital_status, TFAM)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/TFAMvital.jpg")
+# SPANXB1 and vital status
+t.test(SPANXB1 ~ vital_status, data=vital) # p=0.4691
+ggplot(vital, aes(vital_status, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("vital status") +
+  geom_boxplot() +
+  theme_bw()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1vital.jpg")
 
 # is gene expression related to tumor progression?
 gleason <- fpkmGene %>%
@@ -135,5 +182,25 @@ summary(aov(TFAM ~ subtype_SCNA_cluster, dat=gleason)) #p=0.000859
 ggplot(gleason, aes(subtype_SCNA_cluster, TFAM)) + 
   geom_boxplot()
 
-## TFAM
-# ETV1, ETV4
+# SPANXB1 
+summary(aov(SPANXB1 ~ subtype_Reviewed_Gleason_sum, dat=gleason)) #p=0.716
+ggplot(gleason, aes(subtype_Reviewed_Gleason_sum, SPANXB1)) + 
+  geom_boxplot()
+summary(aov(SPANXB1 ~ subtype_Reviewed_Gleason, dat=gleason)) #p=0.863
+ggplot(gleason, aes(subtype_Reviewed_Gleason, SPANXB1)) + 
+  geom_boxplot()
+summary(aov(SPANXB1 ~ morphology, dat=gleason)) #p=3.54e-07
+ggplot(gleason, aes(morphology, SPANXB1)) + 
+  geom_boxplot() # 8255/3 only has two data points
+summary(aov(SPANXB1 ~ subtype_Tumor_cellularity_pathology, dat=gleason)) #p=0.591
+ggplot(gleason, aes(subtype_Tumor_cellularity_pathology, SPANXB1)) + 
+  geom_boxplot() 
+summary(aov(SPANXB1 ~ subtype_Subtype, dat=gleason)) #p=0.851
+ggplot(gleason, aes(subtype_Subtype, SPANXB1)) + 
+  geom_boxplot()
+summary(aov(SPANXB1 ~ subtype_Residual_tumor, dat=gleason)) #p=0.315; should remove NA
+ggplot(gleason, aes(subtype_Residual_tumor, SPANXB1)) + 
+  geom_boxplot()
+summary(aov(SPANXB1 ~ subtype_SCNA_cluster, dat=gleason)) #p=0.237
+ggplot(gleason, aes(subtype_SCNA_cluster, SPANXB1)) + 
+  geom_boxplot()
