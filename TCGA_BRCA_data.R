@@ -72,6 +72,10 @@ genes[spanx, ]
 # SPANXB1 ENSG00000227234
 # SPANXC ENSG00000198573
 # SPANXD ENSG00000196406
+# find RAC1
+rac1 <- grep("rac1", genes$external_gene_name, ignore.case = TRUE)
+genes[rac1, ]
+# RAC1 ENSG00000136238
 
 ##  assemble dataset for genes of interest and metadata
 fpkmDat <- as.data.frame(t(assays(fpkm)[[1]])) # extract expression data
@@ -79,13 +83,13 @@ colnames(fpkmDat) # print gene names
 rownames(fpkmDat) # show sample names
 # extract gene data for target genes
 fpkmGene <- fpkmDat %>%
-  select(ENSG00000198021, ENSG00000203926, ENSG00000277215, ENSG00000227234, ENSG00000198573, ENSG00000196406)
+  select(ENSG00000198021, ENSG00000203926, ENSG00000277215, ENSG00000227234, ENSG00000198573, ENSG00000196406, ENSG00000136238)
 # extract metadata
 metaDat <-as.data.frame(colData(fpkm))
 # bind metadata to gene expression data
 fpkmGene <- cbind(fpkmGene, metaDat)
 # create object of gene names in order
-geneNames <- c("SPANXA1", "SPANXA2", "SPANXA2-OT1", "SPANXB1", "SPANXC", "SPANXD")
+geneNames <- c("SPANXA1", "SPANXA2", "SPANXA2-OT1", "SPANXB1", "SPANXC", "SPANXD", "RAC1")
 # create object of metadata names
 metaNames <- colnames(colData(fpkm))
 # replace column names
