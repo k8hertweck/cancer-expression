@@ -9,15 +9,27 @@ fpkmGene <- read.table("targetGeneBca.csv")
 # force race to factor
 fpkmGene$race <- as.factor(fpkmGene$race)
 
-## visualizing data distribution
+# see all metadata
+colnames(fpkmGene)
+
+## visualizing data distribution for variables of interest
+# not variable or not reported: classification_of_tumor, last_known_disease_status, tumor_grade, progression_or_recurrence, disease_type
 hist(fpkmGene$SPANXB1)
-plot(fpkmGene$race)
-plot(fpkmGene$morphology)
-plot(fpkmGene$shortLetterCode)
+plot(fpkmGene$shortLetterCode) # same (abbreviations): plot(fpkmGene$definition)
+table(fpkmGene$shortLetterCode)
+# NT= normal tissue, PT= primary tumor, MT= metastatic 
+table(fpkmGene$tumor_stage) # same: table(fpkmGene$subtype_Converted.Stage)
+table(fpkmGene$subtype_AJCC.Stage)
+table(fpkmGene$vital_status) #table(fpkmGene$subtype_Vital.Status) has missing data
+table(fpkmGene$morphology)
+table(fpkmGene$subtype_Metastasis) # same: table(fpkmGene$subtype_Metastasis.Coded)
 
-## statistical testing
+# triple negative indicators
+table(fpkmGene$subtype_ER.Status)
+table(fpkmGene$subtype_PR.Status)
+table(fpkmGene$subtype_HER2.Final.Status)
 
-# does gene expression differ between normal and prostate? (unpaired)
+## Q1 Compare spanxb1 expression between normal and BC patients
 normVcancer <- filter(fpkmGene, shortLetterCode != "TM") # remove metastasis
 # unpaired, all data
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=0.008919
@@ -33,8 +45,7 @@ ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) +
   theme_bw() + 
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/SPANXB1unpaired.jpg")
-
-# does gene expression differ between normal and prostate? (paired)
+# paired
 # create paired sample dataset
 normID <- normVcancer %>% # list normal samples
   filter(shortLetterCode == "NT") %>%
@@ -62,12 +73,11 @@ filter(normVcancerPaired, patient == "TCGA-A7-A0DC")
 grep("TCGA-A7-A0DC", normVcancerPaired$patient) # remove 60 (tumor missing metadata)
 filter(normVcancerPaired, patient == "TCGA-A7-A13E")
 grep("TCGA-A7-A13E", normVcancerPaired$patient) # remove 213 and 220 (extra tumor)
-
 # remove extra samples
 normVcancerPaired <- normVcancerPaired[-c(145, 123, 201, 60, 213, 220),]
 # summarize sample counts
 table(normVcancerPaired$shortLetterCode) # 112 NT, 112 TP
-# SPANXB1 paired
+# perform t test
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.0007278
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # 0.0006777
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
@@ -79,6 +89,45 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/SPANXB1paired.jpg")
 
+## Q2 Compare spanxb1 expression between metastatic vs. non metastatic BC patients
+normVmeta <- fpkmGene %>%
+  filter(shortLetterCode != "NT")
+table(normVmeta$shortLetterCode) # 7 TM 1102 TP
+# perform t test
+t.test(SPANXB1 ~ definition, data = normVmeta) # 0.01223
+ggplot(normVmeta, aes(definition, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("tissue type") +
+  #scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "primary tumor")) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1unpairedMetastasis.jpg")
+
+## Q3 Compare spanxb1 expression with clinical stages of BC patients
+
+## Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients
+# extract triple negative
+TNBC <- fpkmGene %>% 
+  filter(subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative")
+# extract normal
+norm <- fpkmGene %>%
+  filter(shortLetterCode == "NT")
+# combine triple negative and normal
+TNBCnorm <- rbind(TNBC, norm) # 113 normal, 118 TNBC
+t.test(SPANXB1 ~ shortLetterCode, data=TNBCnorm) # 0.003443
+ggplot(TNBCnorm, aes(shortLetterCode, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("tissue type") +
+  scale_x_discrete(labels=c("NT" = "normal", "TP" = "TNBC")) +
+  geom_boxplot() +
+  theme_bw()+
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1TNBC.jpg")
+
+## Q5 Compare spanxb1 expression between metastatic vs. non metastatic TNBC patients
+
+## Q6 Compare spanxb1 expression with survival outcome of TNBC patients
 # is gene expression higher in deceased individuals?
 vital <- fpkmGene %>%
   filter(shortLetterCode == "TP") %>%
@@ -94,4 +143,10 @@ ggplot(vital, aes(vital_status, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/SPANXB1vital.jpg")
 
-# add other SPANX?
+## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination
+
+## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
+
+## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
+
+## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
