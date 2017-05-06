@@ -6,9 +6,6 @@ library(ggplot2)
 
 # read in saved data
 fpkmGene <- read.table("targetGeneBca.csv")
-# force race to factor
-fpkmGene$race <- as.factor(fpkmGene$race)
-
 # see all metadata
 colnames(fpkmGene)
 
@@ -16,8 +13,8 @@ colnames(fpkmGene)
 # not variable or not reported: classification_of_tumor, last_known_disease_status, tumor_grade, progression_or_recurrence, disease_type
 hist(fpkmGene$SPANXB1)
 plot(fpkmGene$shortLetterCode) # same (abbreviations): plot(fpkmGene$definition)
-table(fpkmGene$shortLetterCode)
-# NT= normal tissue, PT= primary tumor, MT= metastatic 
+table(fpkmGene$shortLetterCode) 
+# 113 NT= normal tissue, 1102 PT= primary tumor, 7 TM= metastatic 
 table(fpkmGene$tumor_stage) # same: table(fpkmGene$subtype_Converted.Stage)
 table(fpkmGene$subtype_AJCC.Stage)
 table(fpkmGene$vital_status) #table(fpkmGene$subtype_Vital.Status) has missing data
@@ -29,12 +26,15 @@ table(fpkmGene$subtype_ER.Status)
 table(fpkmGene$subtype_PR.Status)
 table(fpkmGene$subtype_HER2.Final.Status)
 
+# assess number of samples with SPANXB1 expression
+SB1 <- fpkmGene %>%
+  filter(SPANXB1 > 0) # 544 samples with SPANXB1 expression
+
 ## Q1 Compare spanxb1 expression between normal and BC patients
+# dataset only includes 1 non-Bca patient; all other "normal" samples are paired with a Bca sample
 normVcancer <- filter(fpkmGene, shortLetterCode != "TM") # remove metastasis
 # unpaired, all data
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=0.008919
-SB1 <- normVcancer %>%
-  filter(SPANXB1 > 0) # 541 samples with SPANXB1 expression
 table(normVcancer$shortLetterCode) # 113 normal, 1102 tumor
 ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) + 
   geom_boxplot() +
@@ -105,6 +105,9 @@ ggplot(normVmeta, aes(definition, SPANXB1)) +
 ggsave("figures/SPANXB1unpairedMetastasis.jpg")
 
 ## Q3 Compare spanxb1 expression with clinical stages of BC patients
+fpkmGene
+table(fpkmGene$subtype_AJCC.Stage)
+table(fpkmGene$tumor_stage)
 
 ## Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients
 # extract triple negative
