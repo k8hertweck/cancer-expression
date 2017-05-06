@@ -90,10 +90,11 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
 ggsave("figures/SPANXB1paired.jpg")
 
 ## Q2 Compare spanxb1 expression between metastatic vs. non metastatic BC patients
+# remove normal samples
 normVmeta <- fpkmGene %>%
   filter(shortLetterCode != "NT")
 table(normVmeta$shortLetterCode) # 7 TM 1102 TP
-# perform t test
+# perform t test (unpaired data)
 t.test(SPANXB1 ~ definition, data = normVmeta) # 0.01223
 ggplot(normVmeta, aes(definition, SPANXB1)) + 
   ylab("SPANXB1 expression") +
@@ -103,6 +104,26 @@ ggplot(normVmeta, aes(definition, SPANXB1)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 ggsave("figures/SPANXB1unpairedMetastasis.jpg")
+# create paired sample dataset
+metaID <- normVmeta %>% 
+  filter(shortLetterCode == "TM") %>%
+  select(bcr_patient_barcode)
+tumVmetPaired <- normVmeta %>%
+  filter(bcr_patient_barcode %in%
+           metaID$bcr_patient_barcode)
+# summarize sample counts
+table(tumVmetPaired$shortLetterCode) # 7 pairs
+# perform t test
+t.test(SPANXB1 ~ shortLetterCode, data = tumVmetPaired, paired=TRUE) # p=0.3132
+t.test(SPANXB1 ~ shortLetterCode, data = tumVmetPaired) # 0.3132
+ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("tissue type (paired samples)") +
+  scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "tumor")) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+ggsave("figures/SPANXB1pairedMetastasis.jpg")
 
 ## Q3 Compare spanxb1 expression with clinical stages of BC patients
 fpkmGene
