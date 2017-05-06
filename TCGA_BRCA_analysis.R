@@ -174,11 +174,12 @@ ggplot(stage, aes(tumor_stage, SPANXB1)) +
 #ggsave("figures/SPANXB1.stage.jpg")
 
 ## Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients
-# extract triple negative
-TNBCneg <- fpkmGene %>% 
+# extract triple negative from tumor samples
+TNBCneg <- tum %>% 
   filter(subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative") %>%
   mutate(triple = "negative")
-TNBCpos <- fpkmGene %>% 
+# extract triple positive from tumor samples
+TNBCpos <- tum %>% 
   filter(subtype_ER.Status == "Positive" & subtype_PR.Status == "Positive" & subtype_HER2.Final.Status == "Positive") %>%
   mutate(triple = "positive")
 # combine triple negative and all positive
@@ -194,6 +195,7 @@ ggplot(TNBC, aes(triple, SPANXB1)) +
 #ggsave("figures/SPANXB1TNBC.jpg")
 
 ## Q5 Compare spanxb1 expression between metastatic vs. non metastatic TNBC patients
+table(TNBC$shortLetterCode) #no TNBC neg or pos are metastatic
 
 ## Q6 Compare spanxb1 expression with survival outcome of TNBC patients
 # is gene expression higher in deceased individuals?
