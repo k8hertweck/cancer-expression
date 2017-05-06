@@ -175,18 +175,19 @@ ggplot(stage, aes(tumor_stage, SPANXB1)) +
 
 ## Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients
 # extract triple negative
-TNBC <- fpkmGene %>% 
-  filter(subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative")
-# extract normal
-norm <- fpkmGene %>%
-  filter(shortLetterCode == "NT")
-# combine triple negative and normal
-TNBCnorm <- rbind(TNBC, norm) # 113 normal, 118 TNBC
-t.test(SPANXB1 ~ shortLetterCode, data=TNBCnorm) # 0.003443
-ggplot(TNBCnorm, aes(shortLetterCode, SPANXB1)) + 
+TNBCneg <- fpkmGene %>% 
+  filter(subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative") %>%
+  mutate(triple = "negative")
+TNBCpos <- fpkmGene %>% 
+  filter(subtype_ER.Status == "Positive" & subtype_PR.Status == "Positive" & subtype_HER2.Final.Status == "Positive") %>%
+  mutate(triple = "positive")
+# combine triple negative and all positive
+TNBC <- rbind(TNBCneg, TNBCpos) # 118 TNBC, 59 all positive
+# perform t test 
+t.test(SPANXB1 ~ triple, data=TNBC) # 0.195
+ggplot(TNBC, aes(triple, SPANXB1)) + 
   ylab("SPANXB1 expression") +
-  xlab("tissue type") +
-  scale_x_discrete(labels=c("NT" = "normal", "TP" = "TNBC")) +
+  xlab("ER/PR/HER2 status") +
   geom_boxplot() +
   theme_bw()+
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
