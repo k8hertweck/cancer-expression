@@ -209,7 +209,7 @@ ggplot(TNBCneg, aes(vital_status, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1vital.jpg")
 
-## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination
+## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (in combination with what?)
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
 
