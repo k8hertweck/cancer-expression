@@ -198,14 +198,10 @@ ggplot(TNBC, aes(triple, SPANXB1)) +
 table(TNBC$shortLetterCode) #no TNBC neg or pos are metastatic
 
 ## Q6 Compare spanxb1 expression with survival outcome of TNBC patients
-# is gene expression higher in deceased individuals?
-vital <- fpkmGene %>%
-  filter(shortLetterCode == "TP") %>%
-  filter(!is.na(vital_status))
-table(vital$vital_status) # 947 alive, 154 dead 
+table(TNBCneg$vital_status) # 100 alive, 18 dead 
 # SPANXB1 and vital status
-t.test(SPANXB1 ~ vital_status, data=vital) # p=0.2003
-ggplot(vital, aes(vital_status, SPANXB1)) + 
+t.test(SPANXB1 ~ vital_status, data=TNBCneg) # 0.5739
+ggplot(TNBCneg, aes(vital_status, SPANXB1)) + 
   ylab("SPANXB1 expression") +
   xlab("vital status") +
   geom_boxplot() +
