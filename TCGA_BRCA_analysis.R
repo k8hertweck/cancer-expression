@@ -146,9 +146,32 @@ ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) +
 #ggsave("figures/SPANXB1pairedMetastasis.jpg")
 
 ## Q3 Compare spanxb1 expression with clinical stages of BC patients
-fpkmGene
-table(fpkmGene$subtype_AJCC.Stage)
-table(fpkmGene$tumor_stage)
+table(fpkmGene$subtype_AJCC.Stage) # [Not Available]
+table(fpkmGene$tumor_stage) # not reported
+# compare stages of tumor only for AJCC 
+AJCC <- tum %>%
+  filter(subtype_AJCC.Stage != "[Not Available]")
+table(AJCC$subtype_AJCC.Stage)
+# perform ANOVA
+summary(aov(SPANXB1 ~ subtype_AJCC.Stage, data = AJCC)) # p=5.55e-11
+ggplot(AJCC, aes(subtype_AJCC.Stage, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("stage") +
+  geom_boxplot() +
+  theme_bw() 
+#ggsave("figures/SPANXB1.AJCC.jpg")
+# compare stages of tumor only for AJCC 
+stage <- tum %>%
+  filter(tumor_stage != "not reported")
+table(stage$tumor_stage)
+# perform ANOVA
+summary(aov(SPANXB1 ~ tumor_stage, data = stage)) #p=0.823
+ggplot(stage, aes(tumor_stage, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("stage") +
+  geom_boxplot() +
+  theme_bw() 
+#ggsave("figures/SPANXB1.stage.jpg")
 
 ## Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients
 # extract triple negative
