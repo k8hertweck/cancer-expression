@@ -4,6 +4,9 @@
 library(dplyr)
 library(ggplot2)
 
+# define exclusion subsetting
+`%ni%` <- Negate(`%in%`) 
+
 # read in saved data
 fpkmGene <- read.table("targetGeneBca.csv")
 # see all metadata
@@ -94,30 +97,27 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
 #ggsave("figures/SPANXB1paired.jpg")
 
 ## Q2 Compare spanxb1 expression between metastatic vs. non metastatic BC patients
-# remove normal samples
-normVmeta <- rbind(norm, meta)
-table(normVmeta$shortLetterCode) # 7 TM 1102 TP
+# combine tumor and metastasis samples
+tumVmetaAll <- rbind(tum, meta)
+table(tumVmetaAll$shortLetterCode) # 7 TM 1102 TP
 # perform t test (unpaired data)
-t.test(SPANXB1 ~ definition, data = normVmeta) # 0.01223
-ggplot(normVmeta, aes(definition, SPANXB1)) + 
+t.test(SPANXB1 ~ definition, data = tumVmetaAll) # 0.01223
+ggplot(tumVmetaAll, aes(definition, SPANXB1)) + 
   ylab("SPANXB1 expression") +
   xlab("tissue type") +
-  #scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "primary tumor")) +
+  scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "primary tumor")) +
   geom_boxplot() +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1unpairedMetastasis.jpg")
-# extract metastasis data
-meta <- fpkmGene %>%
-  filter(shortLetterCode == "TM")
-# extract metastasis IDs
-metaID <- fpkmGene %>% 
-  filter(shortLetterCode == "TM") %>%
-  select(bcr_patient_barcode)
-TPnoMeta <- fpkmGene %>%
-  filter(shortLetterCode == "NT") %>%
-  filter(bcr_patient_barcode %in%
-           metaID$bcr_patient_barcode)
+# remove TP for metastatic patients 
+TPnoMeta <- tum %>%
+  filter(bcr_patient_barcode %ni%
+           meta$bcr_patient_barcode)
+
+
+
+
 # perform t test (unpaired data, with TP from metastasis patients removed)
 
 # create paired sample dataset
