@@ -14,7 +14,8 @@ colnames(fpkmGene)
 
 ## visualizing data distribution for variables of interest
 # not variable or not reported: classification_of_tumor, last_known_disease_status, tumor_grade, progression_or_recurrence, disease_type
-hist(fpkmGene$SPANXB1)
+hist(fpkmGene$SPANXB1) # skewed towards 0
+hist(fpkmGene$RAC1) # very slight skew to 0
 plot(fpkmGene$shortLetterCode) # same (abbreviations): plot(fpkmGene$definition)
 table(fpkmGene$shortLetterCode) 
 # 113 NT= normal tissue, 1102 TP= primary tumor, 7 TM= metastatic 
@@ -183,14 +184,14 @@ TNBCpos <- tum %>%
   filter(subtype_ER.Status == "Positive" & subtype_PR.Status == "Positive" & subtype_HER2.Final.Status == "Positive") %>%
   mutate(triple = "positive")
 # combine triple negative and all positive
-TNBC <- rbind(TNBCneg, TNBCpos) # 118 TNBC, 59 all positive
+TNBCboth <- rbind(TNBCneg, TNBCpos) # 118 TNBC, 59 all positive
 # perform t test 
-t.test(SPANXB1 ~ triple, data=TNBC) # 0.195
-ggplot(TNBC, aes(triple, SPANXB1)) + 
+t.test(SPANXB1 ~ triple, data=TNBCboth) # 0.195
+ggplot(TNBCboth, aes(triple, SPANXB1)) + 
   ylab("SPANXB1 expression") +
   xlab("ER/PR/HER2 status") +
   geom_boxplot() +
-  theme_bw()+
+  theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1TNBC.jpg")
 
@@ -205,15 +206,20 @@ ggplot(TNBCneg, aes(vital_status, SPANXB1)) +
   ylab("SPANXB1 expression") +
   xlab("vital status") +
   geom_boxplot() +
-  theme_bw()+
+  theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1vital.jpg")
 
 ## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (in combination with what?)
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
+normTNBC <- rbind(norm, TNBCneg[,-92])
+ggplot(normTNBC, aes(SPANXB1, RAC1, col=shortLetterCode)) +
+  geom_point() +
+  theme_bw()
 
 ## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
+table(TNBC$shortLetterCode) #no TNBC neg or pos are metastatic
 
 ## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
 
