@@ -153,3 +153,17 @@ ggsave("figures/SPANXB1vital.jpg")
 ## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
 
 ## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
+
+## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
+
+## correct for multiple comparisons?
+
+## transform data, or otherwise manage counts of zero?
+# log transform data
+# rlog from DESeq2
+
+## permutation tests (requires at least two groups of six samples)
+# calculate test statistic for dataset
+# permute labels on samples at random 1000 times
+# recalculate test statistic for each of 1000 permuted datasets
+# calculate percentage of permuted test statistics exceed original
