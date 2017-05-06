@@ -14,7 +14,7 @@ colnames(fpkmGene)
 hist(fpkmGene$SPANXB1)
 plot(fpkmGene$shortLetterCode) # same (abbreviations): plot(fpkmGene$definition)
 table(fpkmGene$shortLetterCode) 
-# 113 NT= normal tissue, 1102 PT= primary tumor, 7 TM= metastatic 
+# 113 NT= normal tissue, 1102 TP= primary tumor, 7 TM= metastatic 
 table(fpkmGene$tumor_stage) # same: table(fpkmGene$subtype_Converted.Stage)
 table(fpkmGene$subtype_AJCC.Stage)
 table(fpkmGene$vital_status) #table(fpkmGene$subtype_Vital.Status) has missing data
@@ -26,13 +26,20 @@ table(fpkmGene$subtype_ER.Status)
 table(fpkmGene$subtype_PR.Status)
 table(fpkmGene$subtype_HER2.Final.Status)
 
+## initial data subsets
 # assess number of samples with SPANXB1 expression
 SB1 <- fpkmGene %>%
   filter(SPANXB1 > 0) # 544 samples with SPANXB1 expression
+meta <- fpkmGene %>%
+  filter(shortLetterCode == "TM")
+norm <- fpkmGene %>%
+  filter(shortLetterCode == "NT")
+tum <- fpkmGene %>%
+  filter(shortLetterCode == "TP")
 
 ## Q1 Compare spanxb1 expression between normal and BC patients
-# dataset only includes 1 non-Bca patient; all other "normal" samples are paired with a Bca sample
-normVcancer <- filter(fpkmGene, shortLetterCode != "TM") # remove metastasis
+# all "normal" samples are paired with a Bca sample
+normVcancer <- rbind(norm, tum)
 # unpaired, all data
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=0.008919
 table(normVcancer$shortLetterCode) # 113 normal, 1102 tumor
@@ -44,37 +51,34 @@ ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) +
   geom_boxplot() +
   theme_bw() + 
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-ggsave("figures/SPANXB1unpaired.jpg")
+#ggsave("figures/SPANXB1unpaired.jpg")
 # paired
 # create paired sample dataset
-normID <- normVcancer %>% # list normal samples
-  filter(shortLetterCode == "NT") %>%
-  select(bcr_patient_barcode)
 normVcancerPaired <- normVcancer %>%
   filter(bcr_patient_barcode %in%
-           normID$bcr_patient_barcode)
+           norm$bcr_patient_barcode)
 # find patients with more than 1 tumor sample to pair
 normVcancerPaired %>% 
   group_by(patient) %>%
   tally() %>%
   filter(n > 2)
-# find patients with more than 1 sample of any type
+# find patients with only 1 normal sample
 normVcancerPaired %>%
   group_by(patient) %>%
   tally() %>%
   filter(n == 1)
-# only one sample: TCGA-BH-A0BS (coded NT/normal, but also stage iiia?)
+# only one sample: TCGA-BH-A0BS 
 filter(normVcancerPaired, patient == "TCGA-BH-A0BS")
-grep("TCGA-BH-A0BS", normVcancerPaired$patient) # remove 145 
+grep("TCGA-BH-A0BS", normVcancerPaired$patient) # remove 67 (no tumor to pair) 
 # three or four samples: TCGA-A7-A0DB, TCGA-A7-A0DC, TCGA-A7-A13E
 filter(normVcancerPaired, patient == "TCGA-A7-A0DB")
-grep("TCGA-A7-A0DB", normVcancerPaired$patient) # remove 123 and 201 (extra tumor)
+grep("TCGA-A7-A0DB", normVcancerPaired$patient) # remove 182 and 216 (extra tumor)
 filter(normVcancerPaired, patient == "TCGA-A7-A0DC")
-grep("TCGA-A7-A0DC", normVcancerPaired$patient) # remove 60 (tumor missing metadata)
+grep("TCGA-A7-A0DC", normVcancerPaired$patient) # remove 145 (tumor missing metadata)
 filter(normVcancerPaired, patient == "TCGA-A7-A13E")
-grep("TCGA-A7-A13E", normVcancerPaired$patient) # remove 213 and 220 (extra tumor)
+grep("TCGA-A7-A13E", normVcancerPaired$patient) # remove 221 and 226 (extra tumor)
 # remove extra samples
-normVcancerPaired <- normVcancerPaired[-c(145, 123, 201, 60, 213, 220),]
+normVcancerPaired <- normVcancerPaired[-c(67, 182, 216, 145, 221, 226),]
 # summarize sample counts
 table(normVcancerPaired$shortLetterCode) # 112 NT, 112 TP
 # perform t test
@@ -87,12 +91,11 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
   geom_boxplot() +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-ggsave("figures/SPANXB1paired.jpg")
+#ggsave("figures/SPANXB1paired.jpg")
 
 ## Q2 Compare spanxb1 expression between metastatic vs. non metastatic BC patients
 # remove normal samples
-normVmeta <- fpkmGene %>%
-  filter(shortLetterCode != "NT")
+normVmeta <- rbind(norm, meta)
 table(normVmeta$shortLetterCode) # 7 TM 1102 TP
 # perform t test (unpaired data)
 t.test(SPANXB1 ~ definition, data = normVmeta) # 0.01223
@@ -103,11 +106,21 @@ ggplot(normVmeta, aes(definition, SPANXB1)) +
   geom_boxplot() +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-ggsave("figures/SPANXB1unpairedMetastasis.jpg")
-# create paired sample dataset
-metaID <- normVmeta %>% 
+#ggsave("figures/SPANXB1unpairedMetastasis.jpg")
+# extract metastasis data
+meta <- fpkmGene %>%
+  filter(shortLetterCode == "TM")
+# extract metastasis IDs
+metaID <- fpkmGene %>% 
   filter(shortLetterCode == "TM") %>%
   select(bcr_patient_barcode)
+TPnoMeta <- fpkmGene %>%
+  filter(shortLetterCode == "NT") %>%
+  filter(bcr_patient_barcode %in%
+           metaID$bcr_patient_barcode)
+# perform t test (unpaired data, with TP from metastasis patients removed)
+
+# create paired sample dataset
 tumVmetPaired <- normVmeta %>%
   filter(bcr_patient_barcode %in%
            metaID$bcr_patient_barcode)
@@ -123,7 +136,7 @@ ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) +
   geom_boxplot() +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-ggsave("figures/SPANXB1pairedMetastasis.jpg")
+#ggsave("figures/SPANXB1pairedMetastasis.jpg")
 
 ## Q3 Compare spanxb1 expression with clinical stages of BC patients
 fpkmGene
@@ -147,7 +160,7 @@ ggplot(TNBCnorm, aes(shortLetterCode, SPANXB1)) +
   geom_boxplot() +
   theme_bw()+
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-ggsave("figures/SPANXB1TNBC.jpg")
+#ggsave("figures/SPANXB1TNBC.jpg")
 
 ## Q5 Compare spanxb1 expression between metastatic vs. non metastatic TNBC patients
 
@@ -165,7 +178,7 @@ ggplot(vital, aes(vital_status, SPANXB1)) +
   geom_boxplot() +
   theme_bw()+
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-ggsave("figures/SPANXB1vital.jpg")
+#ggsave("figures/SPANXB1vital.jpg")
 
 ## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination
 
