@@ -85,7 +85,6 @@ normVcancerPaired <- normVcancerPaired[-c(67, 182, 216, 145, 221, 226),]
 # summarize sample counts
 table(normVcancerPaired$shortLetterCode) # 112 NT, 112 TP
 # perform t test
-t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired, paired=TRUE) # p=0.0007278
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # 0.0006777
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
   ylab("SPANXB1 expression") +
@@ -114,20 +113,28 @@ ggplot(tumVmetaAll, aes(definition, SPANXB1)) +
 TPnoMeta <- tum %>%
   filter(bcr_patient_barcode %ni%
            meta$bcr_patient_barcode)
-
-
-
-
+TPnoMeta <- rbind(TPnoMeta, meta)
+# summarize sample counts
+table(TPnoMeta$shortLetterCode) # TM 7, TP 1095
 # perform t test (unpaired data, with TP from metastasis patients removed)
-
-# create paired sample dataset
-tumVmetPaired <- normVmeta %>%
+t.test(SPANXB1 ~ shortLetterCode, data = TPnoMeta) # 0.01221
+ggplot(TPnoMeta, aes(definition, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("tissue type") +
+  scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "primary tumor")) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1unpairedMetastasisFiltered.jpg")
+# paired
+# create paired metastatic/nonmetastatic sample dataset
+tumMet <- tum %>%
   filter(bcr_patient_barcode %in%
-           metaID$bcr_patient_barcode)
+           meta$bcr_patient_barcode)
+tumVmetPaired <- rbind(tumMet, meta)
 # summarize sample counts
 table(tumVmetPaired$shortLetterCode) # 7 pairs
 # perform t test
-t.test(SPANXB1 ~ shortLetterCode, data = tumVmetPaired, paired=TRUE) # p=0.3132
 t.test(SPANXB1 ~ shortLetterCode, data = tumVmetPaired) # 0.3132
 ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) + 
   ylab("SPANXB1 expression") +
