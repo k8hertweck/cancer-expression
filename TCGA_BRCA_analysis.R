@@ -209,8 +209,10 @@ ggplot(TNBCneg, aes(vital_status, SPANXB1)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1vital.jpg")
+# SPANXB1 and time to death
 
 ## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (in combination with what?)
+TNBCpos
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
 normTNBC <- rbind(norm, TNBCneg[,-92])
@@ -219,9 +221,10 @@ ggplot(normTNBC, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   theme_bw()
 
 ## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
-table(TNBC$shortLetterCode) #no TNBC neg or pos are metastatic
+table(TNBC$shortLetterCode) #no TNBC neg are metastatic
 
 ## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
+TNBCneg
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
 
