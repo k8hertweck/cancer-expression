@@ -235,10 +235,31 @@ ggplot(TNBCpos, aes(vital_status, SPANXB1)) +
 #ggsave("figures/SPANXB1.TNBCpos.vital.jpg")
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
-normTNBC <- rbind(norm, TNBCneg[,-92])
+# aggregate data from norm and TNBC
+normTNBC <- rbind(norm, TNBCneg[,-92]) # removes column triple
+# plot both together
 ggplot(normTNBC, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_point() +
-  theme_bw()
+  ylab("log2 RAC1 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=TNBC, red=normal
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.RAC1.TNBC.jpg")
+# filter for only expression > 0 for both
+bothExp <- normTNBC %>%
+  filter(SPANXB1 > 0.000000) %>%
+  filter(RAC1 > 0.000000)
+ggplot(bothExp, aes(SPANXB1, RAC1, col=shortLetterCode)) +
+  geom_point() +
+  ylab("log2 RAC1 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=TNBC, red=normal
+  geom_smooth(data=subset(bothExp, shortLetterCode == "TP"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(bothExp, shortLetterCode == "NT"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.RAC1.TNBC.filtered.jpg")
 # logistic regression (unequal groupings)?
 
 ## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
@@ -246,7 +267,7 @@ table(TNBCneg$shortLetterCode) #no TNBC neg are metastatic
 
 ## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
 TNBCneg
-ggplot(TNBCneg, aes(log(SPANXB1), log(RAC1), col=vital_status)) +
+ggplot(TNBCneg, aes(SPANXB1, RAC1, col=vital_status)) +
   geom_point() +
   theme_bw()
 # logistic regression (unequal groupings)?
