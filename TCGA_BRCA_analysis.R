@@ -235,6 +235,18 @@ table(TNBCneg$shortLetterCode) #no TNBC neg are metastatic
 
 ## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
 TNBCneg
+ggplot(TNBCneg, aes(log(SPANXB1), log(RAC1), col=vital_status)) +
+  geom_point() +
+  theme_bw()
+# logistic regression (unequal groupings)?
+q10model1 <- glm(vital_status ~ SPANXB1, data = TNBCneg, family = binomial())
+confint(q10model1, parm = "SPANXB1")
+exp(coef(q10model1)["SPANXB1"])
+exp(confint(q10model1, parm = "SPANXB1"))
+summary(q10model1)
+q10model2 <- glm(vital_status ~ SPANXB1 + RAC1, data = TNBCneg, family = binomial())
+summary(q10model2)
+anova(q10model1, q10model2, test = "Chisq")
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
 
