@@ -16,13 +16,13 @@ hist(fpkmGene$SPANXB1) # very left skewed
 hist(fpkmGene$RAC1) # slightly left skewed
 
 # log transform gene expression data
-fpkmGene[1:7] <- fpkmGene[1:7] + 1 # add one to all counts to remove zeros
-fpkmGene[1:7] <- log(fpkmGene[1:7])
+fpkmGene[1:7] <- fpkmGene[1:7] + 1 # add one pseudo count to all counts to remove zeros
+fpkmGene[1:7] <- log2(fpkmGene[1:7]) # apply log2 transformation
 
 ## visualizing data distribution for variables of interest
 # not variable or not reported: classification_of_tumor, last_known_disease_status, tumor_grade, progression_or_recurrence, disease_type
 hist(fpkmGene$SPANXB1) # left skewed
-hist(fpkmGene$RAC1) # fairly normal
+hist(fpkmGene$RAC1) # fairly normal, slightly left skewed
 plot(fpkmGene$shortLetterCode) # same (abbreviations): plot(fpkmGene$definition)
 table(fpkmGene$shortLetterCode) 
 # 113 NT= normal tissue, 1102 TP= primary tumor, 7 TM= metastatic 
@@ -56,7 +56,7 @@ t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=2.2e-16
 table(normVcancer$shortLetterCode) # 113 normal, 1102 tumor
 ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) + 
   geom_boxplot() +
-  ylab(" log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("tissue type (unpaired)") +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
@@ -95,7 +95,7 @@ table(normVcancerPaired$shortLetterCode) # 112 NT, 112 TP
 # perform t test
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # 9.122e-09
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("tissue type (paired samples)") +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
@@ -110,7 +110,7 @@ table(tumVmetaAll$shortLetterCode) # 7 TM 1102 TP
 # perform t test (unpaired data)
 t.test(SPANXB1 ~ definition, data = tumVmetaAll) # 0.7794
 ggplot(tumVmetaAll, aes(definition, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("tissue type") +
   scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "primary tumor")) +
   geom_boxplot() +
@@ -127,7 +127,7 @@ table(TPnoMeta$shortLetterCode) # TM 7, TP 1095
 # perform t test (unpaired data, with TP from metastasis patients removed)
 t.test(SPANXB1 ~ shortLetterCode, data = TPnoMeta) # p=0.7739
 ggplot(TPnoMeta, aes(definition, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("tissue type") +
   scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "primary tumor")) +
   geom_boxplot() +
@@ -145,7 +145,7 @@ table(tumVmetPaired$shortLetterCode) # 7 pairs
 # perform t test
 t.test(SPANXB1 ~ shortLetterCode, data = tumVmetPaired) # 0.4917
 ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("tissue type (paired samples)") +
   scale_x_discrete(labels=c("TM" = "metastatic", "TP" = "tumor")) +
   geom_boxplot() +
@@ -163,7 +163,7 @@ table(AJCC$subtype_AJCC.Stage)
 # perform ANOVA
 summary(aov(SPANXB1 ~ subtype_AJCC.Stage, data = AJCC)) # 0.87
 ggplot(AJCC, aes(subtype_AJCC.Stage, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("stage") +
   geom_boxplot() +
   theme_bw() 
@@ -175,7 +175,7 @@ table(stage$tumor_stage)
 # perform ANOVA
 summary(aov(SPANXB1 ~ tumor_stage, data = stage)) #p=0.579
 ggplot(stage, aes(tumor_stage, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("stage") +
   geom_boxplot() +
   theme_bw() 
@@ -195,7 +195,7 @@ TNBCboth <- rbind(TNBCneg, TNBCpos) # 118 TNBC, 59 all positive
 # perform t test 
 t.test(SPANXB1 ~ triple, data=TNBCboth) # 0.06836
 ggplot(TNBCboth, aes(triple, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("ER/PR/HER2 status") +
   geom_boxplot() +
   theme_bw() +
@@ -210,7 +210,7 @@ table(TNBCneg$vital_status) # 100 alive, 18 dead
 # SPANXB1 and vital status
 t.test(SPANXB1 ~ vital_status, data=TNBCneg) # 0.1257
 ggplot(TNBCneg, aes(vital_status, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("vital status") +
   geom_boxplot() +
   theme_bw() +
@@ -223,7 +223,7 @@ table(TNBCpos$vital_status) # 52 alive, 7 dead
 # SPANXB1 and vital status
 t.test(SPANXB1 ~ vital_status, data=TNBCpos) # 0.9511
 ggplot(TNBCpos, aes(vital_status, SPANXB1)) + 
-  ylab("log SPANXB1 expression") +
+  ylab("log2 SPANXB1 expression") +
   xlab("vital status") +
   geom_boxplot() +
   theme_bw() +
