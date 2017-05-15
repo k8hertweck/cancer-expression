@@ -235,6 +235,12 @@ ggplot(TNBCpos, aes(vital_status, SPANXB1)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1.TNBCpos.vital.jpg")
+# SPANXB1, ER+ and vital status
+subtype_ER.Status
+# SPANXB1, PR+ and vital status
+subtype_PR.Status
+# SPANXB1, HER2+ and vital status
+subtype_HER2.Final.Status
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
 # aggregate data from norm and TNBC
