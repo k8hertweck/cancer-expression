@@ -14,6 +14,8 @@ colnames(fpkmGene)
 # view untransformed distribution
 hist(fpkmGene$SPANXB1) # very left skewed 
 hist(fpkmGene$RAC1) # slightly left skewed
+# save untransformed data
+fpkmGeneNolog <- fpkmGene
 
 # log transform gene expression data
 fpkmGene[1:7] <- fpkmGene[1:7] + 1 # add one pseudo count to all counts to remove zeros
