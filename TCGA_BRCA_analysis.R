@@ -279,6 +279,7 @@ summary(q10model1)
 q10model2 <- glm(vital_status ~ SPANXB1 + RAC1, data = TNBCneg, family = binomial())
 summary(q10model2)
 anova(q10model1, q10model2, test = "Chisq")
+1-pchisq(98.17, 115)
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
 
