@@ -156,27 +156,31 @@ ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) +
 ## Q3 Compare spanxb1 expression with clinical stages of BC patients
 table(fpkmGene$subtype_AJCC.Stage) # missing data are "[Not Available]"
 table(fpkmGene$tumor_stage) # missing data are "not reported"
-# compare stages of tumor only for AJCC 
+# compare AJCC stages
 AJCC <- tum %>%
-  filter(subtype_AJCC.Stage != "[Not Available]")
+  filter(subtype_AJCC.Stage != "[Not Available]") %>%
+  filter(subtype_AJCC.Stage != "Stage X")
 table(AJCC$subtype_AJCC.Stage)
 # perform ANOVA
-summary(aov(SPANXB1 ~ subtype_AJCC.Stage, data = AJCC)) # 0.87
+summary(aov(SPANXB1 ~ subtype_AJCC.Stage, data = AJCC)) # 0.907
 ggplot(AJCC, aes(subtype_AJCC.Stage, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
   xlab("stage") +
+  scale_x_discrete(labels=c("Stage I" = "I", "Stage IA" = "IA", "Stage IB" = "IB", "Stage II" = "II", "Stage IIA" = "IIA", "Stage IIB" = "IIB", "Stage III" = "III", "Stage IIIA" = "IIIA", "Stage IIIB" = "IIIB", "Stage IIIC" = "IIIC", "Stage IV" = "IV")) +
   geom_boxplot() +
   theme_bw() 
 #ggsave("figures/SPANXB1.AJCC.jpg")
-# compare stages of tumor only for AJCC 
+# compare tumor stages
 stage <- tum %>%
-  filter(tumor_stage != "not reported")
+  filter(tumor_stage != "not reported") %>%
+  filter(tumor_stage != "stage x")
 table(stage$tumor_stage)
 # perform ANOVA
-summary(aov(SPANXB1 ~ tumor_stage, data = stage)) #p=0.579
+summary(aov(SPANXB1 ~ tumor_stage, data = stage)) #p=0.514
 ggplot(stage, aes(tumor_stage, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
   xlab("stage") +
+  scale_x_discrete(labels=c("stage i" = "I", "stage ia" = "IA", "stage ib" = "IB", "stage ii" = "II", "stage iia" = "IIA", "stage iib" = "IIB", "stage iii" = "III", "stage iiia" = "IIIA", "stage iiib" = "IIIB", "stage iiic" = "IIIC", "stage iv" = "IV")) +
   geom_boxplot() +
   theme_bw() 
 #ggsave("figures/SPANXB1.stage.jpg")
