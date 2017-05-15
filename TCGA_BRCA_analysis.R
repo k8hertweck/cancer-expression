@@ -196,7 +196,7 @@ ggplot(TNBCboth, aes(triple, SPANXB1)) +
 #ggsave("figures/SPANXB1TNBC.jpg")
 
 ## Q5 Compare spanxb1 expression between metastatic vs. non metastatic TNBC patients
-table(TNBC$shortLetterCode) #no TNBC neg or pos are metastatic
+table(TNBCneg$shortLetterCode) #no TNBC neg or pos are metastatic
 
 ## Q6 Compare spanxb1 expression with survival outcome of TNBC patients
 table(TNBCneg$vital_status) # 100 alive, 18 dead 
@@ -208,20 +208,30 @@ ggplot(TNBCneg, aes(vital_status, SPANXB1)) +
   geom_boxplot() +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-#ggsave("figures/SPANXB1vital.jpg")
+#ggsave("figures/SPANXB1.TNBCneg.vital.jpg")
 # SPANXB1 and time to death
 
-## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (in combination with what?)
-TNBCpos
+## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (e.g., co-expression of genes)
+table(TNBCpos$vital_status) # 52 alive, 7 dead 
+# SPANXB1 and vital status
+t.test(SPANXB1 ~ vital_status, data=TNBCpos) # 0.2151
+ggplot(TNBCpos, aes(vital_status, SPANXB1)) + 
+  ylab("SPANXB1 expression") +
+  xlab("vital status") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1.TNBCpos.vital.jpg")
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
 normTNBC <- rbind(norm, TNBCneg[,-92])
 ggplot(normTNBC, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_point() +
   theme_bw()
+# logistic regression (unequal groupings)?
 
 ## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
-table(TNBC$shortLetterCode) #no TNBC neg are metastatic
+table(TNBCneg$shortLetterCode) #no TNBC neg are metastatic
 
 ## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
 TNBCneg
