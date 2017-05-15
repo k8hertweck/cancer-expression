@@ -284,9 +284,7 @@ anova(q10model1, q10model2, test = "Chisq")
 
 ## correct for multiple comparisons?
 
-## transform data, or otherwise manage counts of zero?
-# log transform data
-# rlog from DESeq2
+# rlog from DESeq2 as alternative transformation method
 
 ## permutation tests (requires at least two groups of six samples)
 # calculate test statistic for dataset
