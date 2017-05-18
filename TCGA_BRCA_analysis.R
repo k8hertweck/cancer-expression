@@ -245,6 +245,13 @@ subtype_HER2.Final.Status
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
 # aggregate data from norm and TNBC
 normTNBC <- rbind(norm, TNBCneg[,-92]) # removes column triple
+table(normTNBC$shortLetterCode) # 113 normal, 118 TNBC (unpaired)
+# linear regression (only normal)
+norm.mod <- lm(SPANXB1 ~ RAC1, data=norm)
+summary(norm.mod) # p=0.697, R2=0.001371
+# linear regression (only TNBC)
+TNBCmod <- lm(SPANXB1 ~ RAC1, data=TNBCneg)
+summary(TNBCmod) # p=0.1707, R2=0.1612
 # plot both together
 ggplot(normTNBC, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_point() +
@@ -255,10 +262,23 @@ ggplot(normTNBC, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.RAC1.TNBC.jpg")
+# linear regression (only normal)
+normExp <- norm %>%
+  filter(SPANXB1 > 0.000000) %>%
+  filter(RAC1 > 0.000000)
+normExp.mod <- lm(SPANXB1 ~ RAC1, data=normExp)
+summary(normExp.mod) # p=0.7759, R2=0.005982
+# linear regression (only TNBC)
+TNBCexp <- TNBCneg %>%
+  filter(SPANXB1 > 0.000000) %>%
+  filter(RAC1 > 0.000000)
+TNBCexp.mod <- lm(SPANXB1 ~ RAC1, data=TNBCexp)
+summary(TNBCexp.mod) # p=0.07648, R2=0.06265
 # filter for only expression > 0 for both
 bothExp <- normTNBC %>%
   filter(SPANXB1 > 0.000000) %>%
   filter(RAC1 > 0.000000)
+# plot both together
 ggplot(bothExp, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_point() +
   ylab("log2 RAC1 expression") +
@@ -274,10 +294,27 @@ ggplot(bothExp, aes(SPANXB1, RAC1, col=shortLetterCode)) +
 table(TNBCneg$shortLetterCode) #no TNBC neg are metastatic
 
 ## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
-TNBCneg
+table(TNBCneg$vital_status) # 100 alive, 18 dead
+# linear regression (only live)
+TNBClive <- TNBCneg %>%
+  filter(vital_status == "alive")
+TNBClive.mod <- lm(SPANXB1 ~ RAC1, data=TNBClive)
+summary(TNBClive.mod) # p=0.2782, R2=0.01199
+# linear regression (only dead)
+TNBCdead <- TNBCneg %>%
+  filter(vital_status == "dead")
+TNBCdead.mod <- lm(SPANXB1 ~ RAC1, data=TNBCdead)
+summary(TNBCdead.mod) # p=0.4423, R2=0.03735
+# plot both together
 ggplot(TNBCneg, aes(SPANXB1, RAC1, col=vital_status)) +
   geom_point() +
-  theme_bw()
+  ylab("log2 RAC1 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=dead, red=alive
+  geom_smooth(data=subset(bothExp, vital_status == "dead"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(bothExp, vital_status == "alive"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.RAC1.vital.jpg")
 # logistic regression (unequal groupings)?
 q10model1 <- glm(vital_status ~ SPANXB1, data = TNBCneg, family = binomial())
 confint(q10model1, parm = "SPANXB1")
