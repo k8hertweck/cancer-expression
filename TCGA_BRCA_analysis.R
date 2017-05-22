@@ -14,17 +14,21 @@ colnames(fpkmGene)
 # view untransformed distribution
 hist(fpkmGene$SPANXB1) # very left skewed 
 hist(fpkmGene$RAC1) # slightly left skewed
+hist(fpkmGene$EGFR) # very left skewed
+hist(fpkmGene$EGFR.AS1) # very left skewed
 # save untransformed data
 fpkmGeneNolog <- fpkmGene
 
 # log transform gene expression data
-fpkmGene[1:7] <- fpkmGene[1:7] + 1 # add one pseudo count to all counts to remove zeros
-fpkmGene[1:7] <- log2(fpkmGene[1:7]) # apply log2 transformation
+fpkmGene[1:9] <- fpkmGene[1:9] + 1 # add one pseudo count to all counts to remove zeros
+fpkmGene[1:9] <- log2(fpkmGene[1:9]) # apply log2 transformation
 
 ## visualizing data distribution for variables of interest
 # not variable or not reported: classification_of_tumor, last_known_disease_status, tumor_grade, progression_or_recurrence, disease_type
-hist(fpkmGene$SPANXB1) # left skewed
+hist(fpkmGene$SPANXB1) # left skewed (many zeros)
 hist(fpkmGene$RAC1) # fairly normal, slightly left skewed
+hist(fpkmGene$EGFR) # normal
+hist(fpkmGene$EGFR.AS1) # left skewed (many zeros)
 plot(fpkmGene$shortLetterCode) # same (abbreviations): plot(fpkmGene$definition)
 table(fpkmGene$shortLetterCode) 
 # 113 NT= normal tissue, 1102 TP= primary tumor, 7 TM= metastatic 
@@ -315,7 +319,7 @@ ggplot(TNBCneg, aes(SPANXB1, RAC1, col=vital_status)) +
   geom_smooth(data=subset(bothExp, vital_status == "dead"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(bothExp, vital_status == "alive"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.RAC1.vital.jpg")
-# logistic regression (unequal groupings)?
+# logistic regression (not used in final summary)
 q10model1 <- glm(vital_status ~ SPANXB1, data = TNBCneg, family = binomial())
 confint(q10model1, parm = "SPANXB1")
 exp(coef(q10model1)["SPANXB1"])
@@ -325,6 +329,10 @@ q10model2 <- glm(vital_status ~ SPANXB1 + RAC1, data = TNBCneg, family = binomia
 summary(q10model2)
 anova(q10model1, q10model2, test = "Chisq")
 1-pchisq(98.17, 115)
+
+# Q11 Compare EGFR/SPANXB1 expression together in normal vs. TNBC
+
+# Q12 Compare EGFR/SPANXB1 expression with survival of TNBC
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
 
