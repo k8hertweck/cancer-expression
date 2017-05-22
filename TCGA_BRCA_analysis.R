@@ -226,11 +226,10 @@ ggplot(TNBCneg, aes(vital_status, SPANXB1)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1.TNBCneg.vital.jpg")
-# SPANXB1 and time to death
 
 ## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (e.g., co-expression of genes)
 table(TNBCpos$vital_status) # 52 alive, 7 dead 
-# SPANXB1 and vital status
+# SPANXB1 and vital status of triple positive patients
 t.test(SPANXB1 ~ vital_status, data=TNBCpos) # 0.9511
 ggplot(TNBCpos, aes(vital_status, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
@@ -239,12 +238,16 @@ ggplot(TNBCpos, aes(vital_status, SPANXB1)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1.TNBCpos.vital.jpg")
-# SPANXB1, ER+ and vital status
-subtype_ER.Status
-# SPANXB1, PR+ and vital status
-subtype_PR.Status
-# SPANXB1, HER2+ and vital status
-subtype_HER2.Final.Status
+# SPANXB1, ER+ (subtype_ER.Status) and vital status
+t.test(SPANXB1 ~ , data=TNBCpos) # 0.9511
+
+
+# SPANXB1, PR+ (subtype_PR.Status) and vital status
+
+# SPANXB1, HER2+ (subtype_HER2.Final.Status) and vital status
+
+# SPANXB1 and ER/PR/HER2+
+TNBCpos
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
 # aggregate data from norm and TNBC
@@ -292,7 +295,7 @@ ggplot(bothExp, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_smooth(data=subset(bothExp, shortLetterCode == "TP"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(bothExp, shortLetterCode == "NT"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.RAC1.TNBC.filtered.jpg")
-# logistic regression (unequal groupings)?
+# logistic regression?
 
 ## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
 table(TNBCneg$shortLetterCode) #no TNBC neg are metastatic
@@ -335,6 +338,8 @@ anova(q10model1, q10model2, test = "Chisq")
 # Q12 Compare EGFR/SPANXB1 expression with survival of TNBC
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
+
+## web tool for Kaplan Meier plots: http://kmplot.com/analysis/index.php?p=service&cancer=breast#
 
 ## correct for multiple comparisons?
 
