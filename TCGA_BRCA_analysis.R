@@ -175,7 +175,7 @@ table(AJCC$subtype_AJCC.Stage)
 summary(aov(SPANXB1 ~ subtype_AJCC.Stage, data = AJCC)) # 0.907
 ggplot(AJCC, aes(subtype_AJCC.Stage, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
-  xlab("stage") +
+  xlab(" AJCC stage") +
   scale_x_discrete(labels=c("Stage I" = "I", "Stage IA" = "IA", "Stage IB" = "IB", "Stage II" = "II", "Stage IIA" = "IIA", "Stage IIB" = "IIB", "Stage III" = "III", "Stage IIIA" = "IIIA", "Stage IIIB" = "IIIB", "Stage IIIC" = "IIIC", "Stage IV" = "IV")) +
   geom_boxplot() +
   theme_bw() 
@@ -187,7 +187,7 @@ table(AJCC_filt$subtype_AJCC.Stage)
 summary(aov(SPANXB1 ~ subtype_AJCC.Stage, data = AJCC_filt)) # 0.0346
 ggplot(AJCC_filt, aes(subtype_AJCC.Stage, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
-  xlab("stage") +
+  xlab("AJCC stage") +
   scale_x_discrete(labels=c("Stage I" = "I", "Stage IA" = "IA", "Stage IB" = "IB", "Stage II" = "II", "Stage IIA" = "IIA", "Stage IIB" = "IIB", "Stage III" = "III", "Stage IIIA" = "IIIA", "Stage IIIB" = "IIIB", "Stage IIIC" = "IIIC", "Stage IV" = "IV")) +
   geom_boxplot() +
   theme_bw() 
@@ -201,7 +201,7 @@ table(stage$tumor_stage)
 summary(aov(SPANXB1 ~ tumor_stage, data = stage)) #p=0.514
 ggplot(stage, aes(tumor_stage, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
-  xlab("stage") +
+  xlab("tumor stage") +
   scale_x_discrete(labels=c("stage i" = "I", "stage ia" = "IA", "stage ib" = "IB", "stage ii" = "II", "stage iia" = "IIA", "stage iib" = "IIB", "stage iii" = "III", "stage iiia" = "IIIA", "stage iiib" = "IIIB", "stage iiic" = "IIIC", "stage iv" = "IV")) +
   geom_boxplot() +
   theme_bw() 
@@ -258,7 +258,15 @@ ggplot(TNBCpos, aes(vital_status, SPANXB1)) +
 table(fpkmGene$subtype_ER.Status) # 175 Negative, 591 Positive, Indeterminate, Not Performed, Performed but Not Available
 SP.ER <- fpkmGene %>% 
   filter(subtype_ER.Status == "Positive" | subtype_ER.Status == "Negative")
-# logistic regression
+t.test(SPANXB1 ~ subtype_ER.Status, data=SP.ER) # 0.004189
+ggplot(SP.ER, aes(subtype_ER.Status, SPANXB1)) + 
+  ylab("log2 SPANXB1 expression") +
+  xlab("ER status") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1.ERstatus.jpg")
+# logistic regression # 766 individuals
 SP.ER.mod <- glm(vital_status ~ SPANXB1 + subtype_ER.Status, data = SP.ER, family = "binomial")
 summary(SP.ER.mod) # nope
 # odds ratio and 95% CI
@@ -267,7 +275,15 @@ exp(cbind(OR = coef(SP.ER.mod), confint(SP.ER.mod)))
 table(fpkmGene$subtype_PR.Status) # 247 Negative, 516 Positive
 SP.PR <- fpkmGene %>% 
   filter(subtype_PR.Status == "Positive" | subtype_PR.Status == "Negative")
-# logistic regression
+t.test(SPANXB1 ~ subtype_PR.Status, data=SP.PR) # 0.2112
+ggplot(SP.PR, aes(subtype_PR.Status, SPANXB1)) + 
+  ylab("log2 SPANXB1 expression") +
+  xlab("PR status") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1.PRstatus.jpg")
+# logistic regression # 763 individuals
 SP.PR.mod <- glm(vital_status ~ SPANXB1 + subtype_PR.Status, data = SP.PR, family = "binomial")
 summary(SP.PR.mod) # nope
 # odds ratio and 95% CI
@@ -276,12 +292,20 @@ exp(cbind(OR = coef(SP.PR.mod), confint(SP.PR.mod)))
 table(fpkmGene$subtype_HER2.Final.Status) # 642 Negative, 111 Positive
 SP.HER <- fpkmGene %>% 
   filter(subtype_HER2.Final.Status == "Positive" | subtype_HER2.Final.Status == "Negative")
-# logistic regression
+t.test(SPANXB1 ~ subtype_HER2.Final.Status, data=SP.HER) # 0.3968
+ggplot(SP.HER, aes(subtype_HER2.Final.Status, SPANXB1)) + 
+  ylab("log2 SPANXB1 expression") +
+  xlab("HER2 status") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1.HERstatus.jpg")
+# logistic regression # 753 individuals
 SP.HER.mod <- glm(vital_status ~ SPANXB1 + subtype_HER2.Final.Status, data = SP.HER, family = "binomial")
 summary(SP.HER.mod) # nope
 # odds ratio and 95% CI
 exp(cbind(OR = coef(SP.HER.mod), confint(SP.HER.mod)))
-# SPANXB1 and ER/PR/HER2+
+# SPANXB1 and ER/PR/HER2+ # 715 individuals
 SP.PR.ER.HER <- fpkmGene %>% 
   filter(subtype_PR.Status == "Positive" | subtype_PR.Status == "Negative") %>%
   filter(subtype_ER.Status == "Positive" | subtype_ER.Status == "Negative") %>%
@@ -301,7 +325,7 @@ norm.mod <- lm(SPANXB1 ~ RAC1, data=norm)
 summary(norm.mod) # p=0.697, R2=0.001371
 # linear regression (only TNBC)
 TNBCmod <- lm(SPANXB1 ~ RAC1, data=TNBCneg)
-summary(TNBCmod) # p=0.1707, R2=0.1612
+summary(TNBCmod) # p=0.1707, R2=0.01612
 # plot both together
 ggplot(normTNBC, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_point() +
@@ -387,6 +411,7 @@ ggplot(normTNBC, aes(SPANXB1, EGFR, col=shortLetterCode)) +
   theme(legend.position="none") + # blue=TNBC, red=normal
   geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.EGFR.jpg")
 
 # Q12 Compare EGFR/SPANXB1 expression with survival of TNBC
 # logistic regression 
