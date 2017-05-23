@@ -96,10 +96,12 @@ filter(normVcancerPaired, patient == "TCGA-A7-A13E")
 grep("TCGA-A7-A13E", normVcancerPaired$patient) # remove 221 and 226 (extra tumor)
 # remove extra samples
 normVcancerPaired <- normVcancerPaired[-c(67, 182, 216, 145, 221, 226),]
+# sort by barcode
+normVcancerPaired <- normVcancerPaired[order(normVcancerPaired$patient),] 
 # summarize sample counts
 table(normVcancerPaired$shortLetterCode) # 112 NT, 112 TP
-# perform t test
-t.test(SPANXB1 ~ shortLetterCode, data = normVcancerPaired) # 9.122e-09
+# perform t test (paired)
+t.test(SPANXB1 ~ shortLetterCode, paired=TRUE, data = normVcancerPaired) # 4.177e-09
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
   xlab("tissue type (paired samples)") +
@@ -148,6 +150,8 @@ tumMet <- tum %>%
 tumVmetPaired <- rbind(tumMet, meta)
 # summarize sample counts
 table(tumVmetPaired$shortLetterCode) # 7 pairs
+# sort for paired samples
+tumVmetPaired <- tumVmetPaired[order(tumVmetPaired$patient)]
 # perform t test
 t.test(SPANXB1 ~ shortLetterCode, data = tumVmetPaired) # 0.4917
 ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) + 
@@ -176,6 +180,18 @@ ggplot(AJCC, aes(subtype_AJCC.Stage, SPANXB1)) +
   geom_boxplot() +
   theme_bw() 
 #ggsave("figures/SPANXB1.AJCC.jpg")
+# AJCC stages with zeros removed
+AJCC_filt <- AJCC %>%
+  filter(SPANXB1 > 0)
+table(AJCC_filt$subtype_AJCC.Stage)
+summary(aov(SPANXB1 ~ subtype_AJCC.Stage, data = AJCC_filt)) # 0.0346
+ggplot(AJCC_filt, aes(subtype_AJCC.Stage, SPANXB1)) + 
+  ylab("log2 SPANXB1 expression") +
+  xlab("stage") +
+  scale_x_discrete(labels=c("Stage I" = "I", "Stage IA" = "IA", "Stage IB" = "IB", "Stage II" = "II", "Stage IIA" = "IIA", "Stage IIB" = "IIB", "Stage III" = "III", "Stage IIIA" = "IIIA", "Stage IIIB" = "IIIB", "Stage IIIC" = "IIIC", "Stage IV" = "IV")) +
+  geom_boxplot() +
+  theme_bw() 
+#ggsave("figures/SPANXB1.AJCC_filt.jpg")
 # compare tumor stages
 stage <- tum %>%
   filter(tumor_stage != "not reported") %>%
@@ -239,19 +255,46 @@ ggplot(TNBCpos, aes(vital_status, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1.TNBCpos.vital.jpg")
 # SPANXB1, ER+ (subtype_ER.Status) and vital status
-t.test(SPANXB1 ~ , data=TNBCpos) # 0.9511
-
-
+table(fpkmGene$subtype_ER.Status) # 175 Negative, 591 Positive, Indeterminate, Not Performed, Performed but Not Available
+SP.ER <- fpkmGene %>% 
+  filter(subtype_ER.Status == "Positive" | subtype_ER.Status == "Negative")
+# logistic regression
+SP.ER.mod <- glm(vital_status ~ SPANXB1 + subtype_ER.Status, data = SP.ER, family = "binomial")
+summary(SP.ER.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.ER.mod), confint(SP.ER.mod)))
 # SPANXB1, PR+ (subtype_PR.Status) and vital status
-
+table(fpkmGene$subtype_PR.Status) # 247 Negative, 516 Positive
+SP.PR <- fpkmGene %>% 
+  filter(subtype_PR.Status == "Positive" | subtype_PR.Status == "Negative")
+# logistic regression
+SP.PR.mod <- glm(vital_status ~ SPANXB1 + subtype_PR.Status, data = SP.PR, family = "binomial")
+summary(SP.PR.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.PR.mod), confint(SP.PR.mod)))
 # SPANXB1, HER2+ (subtype_HER2.Final.Status) and vital status
-
+table(fpkmGene$subtype_HER2.Final.Status) # 642 Negative, 111 Positive
+SP.HER <- fpkmGene %>% 
+  filter(subtype_HER2.Final.Status == "Positive" | subtype_HER2.Final.Status == "Negative")
+# logistic regression
+SP.HER.mod <- glm(vital_status ~ SPANXB1 + subtype_HER2.Final.Status, data = SP.HER, family = "binomial")
+summary(SP.HER.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.HER.mod), confint(SP.HER.mod)))
 # SPANXB1 and ER/PR/HER2+
-TNBCpos
+SP.PR.ER.HER <- fpkmGene %>% 
+  filter(subtype_PR.Status == "Positive" | subtype_PR.Status == "Negative") %>%
+  filter(subtype_ER.Status == "Positive" | subtype_ER.Status == "Negative") %>%
+  filter(subtype_HER2.Final.Status == "Positive" | subtype_HER2.Final.Status == "Negative")
+# logistic regression
+SP.PR.ER.HER.mod <- glm(vital_status ~ SPANXB1 + subtype_PR.Status + subtype_ER.Status + subtype_HER2.Final.Status, data = SP.PR.ER.HER, family = "binomial")
+summary(SP.PR.ER.HER.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.HER.mod), confint(SP.HER.mod)))
 
 ## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
 # aggregate data from norm and TNBC
-normTNBC <- rbind(norm, TNBCneg[,-92]) # removes column triple
+normTNBC <- rbind(norm, TNBCneg[,-94]) # removes column triple
 table(normTNBC$shortLetterCode) # 113 normal, 118 TNBC (unpaired)
 # linear regression (only normal)
 norm.mod <- lm(SPANXB1 ~ RAC1, data=norm)
@@ -295,7 +338,6 @@ ggplot(bothExp, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_smooth(data=subset(bothExp, shortLetterCode == "TP"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(bothExp, shortLetterCode == "NT"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.RAC1.TNBC.filtered.jpg")
-# logistic regression?
 
 ## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
 table(TNBCneg$shortLetterCode) #no TNBC neg are metastatic
@@ -322,20 +364,36 @@ ggplot(TNBCneg, aes(SPANXB1, RAC1, col=vital_status)) +
   geom_smooth(data=subset(bothExp, vital_status == "dead"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(bothExp, vital_status == "alive"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.RAC1.vital.jpg")
-# logistic regression (not used in final summary)
-q10model1 <- glm(vital_status ~ SPANXB1, data = TNBCneg, family = binomial())
-confint(q10model1, parm = "SPANXB1")
-exp(coef(q10model1)["SPANXB1"])
-exp(confint(q10model1, parm = "SPANXB1"))
-summary(q10model1)
-q10model2 <- glm(vital_status ~ SPANXB1 + RAC1, data = TNBCneg, family = binomial())
-summary(q10model2)
-anova(q10model1, q10model2, test = "Chisq")
-1-pchisq(98.17, 115)
+# logistic regression 
+SP.RAC.mod <- glm(vital_status ~ SPANXB1 + RAC1, data = TNBCneg, family = "binomial")
+summary(SP.RAC.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.RAC.mod), confint(SP.RAC.mod)))
 
 # Q11 Compare EGFR/SPANXB1 expression together in normal vs. TNBC
+table(normTNBC$shortLetterCode) # 113 normal, 118 TNBC (unpaired)
+# linear regression (only normal)
+norm.mod <- lm(SPANXB1 ~ EGFR, data=norm)
+summary(norm.mod) # p=0.7676, R2=0.0007897
+# linear regression (only TNBC)
+TNBCmod <- lm(SPANXB1 ~ EGFR, data=TNBCneg)
+summary(TNBCmod) # p=0.528, R2=0.003441
+# plot both together
+ggplot(normTNBC, aes(SPANXB1, EGFR, col=shortLetterCode)) +
+  geom_point() +
+  ylab("log2 EGFR expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=TNBC, red=normal
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
 
 # Q12 Compare EGFR/SPANXB1 expression with survival of TNBC
+# logistic regression 
+SP.EG.mod <- glm(vital_status ~ SPANXB1 + EGFR, data = TNBCneg, family = "binomial")
+summary(SP.EG.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.RAC.mod), confint(SP.RAC.mod)))
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
 
