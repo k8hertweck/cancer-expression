@@ -2,7 +2,7 @@
 
 # install TCGA bioconductor tools
 source("https://bioconductor.org/biocLite.R")
-biocLite("TCGAbiolinks")
+#biocLite("TCGAbiolinks")
 library(TCGAbiolinks)
 library(SummarizedExperiment)
 library(dplyr)
@@ -81,6 +81,9 @@ egfr <- grep("EGFR", genes$external_gene_name, ignore.case = TRUE)
 genes[egfr,]
 # EGFR ENSG00000146648
 # EGFR-AS1 ENSG00000224057
+# find SH3GL2 ENSG00000107295
+SH3GL2 <- grep("SH3GL2", genes$external_gene_name, ignore.case = TRUE)
+genes[SH3GL2, ]
 
 ##  assemble dataset for genes of interest and metadata
 fpkmDat <- as.data.frame(t(assays(fpkm)[[1]])) # extract expression data
@@ -88,13 +91,13 @@ colnames(fpkmDat) # print gene names
 rownames(fpkmDat) # show sample names
 # extract gene data for target genes
 fpkmGene <- fpkmDat %>%
-  select(ENSG00000198021, ENSG00000203926, ENSG00000277215, ENSG00000227234, ENSG00000198573, ENSG00000196406, ENSG00000136238, ENSG00000146648, ENSG00000224057)
+  select(ENSG00000198021, ENSG00000203926, ENSG00000277215, ENSG00000227234, ENSG00000198573, ENSG00000196406, ENSG00000136238, ENSG00000146648, ENSG00000224057, ENSG00000107295)
 # extract metadata
 metaDat <-as.data.frame(colData(fpkm))
 # bind metadata to gene expression data
 fpkmGene <- cbind(fpkmGene, metaDat)
 # create object of gene names in order
-geneNames <- c("SPANXA1", "SPANXA2", "SPANXA2-OT1", "SPANXB1", "SPANXC", "SPANXD", "RAC1", "EGFR", "EGFR-AS1")
+geneNames <- c("SPANXA1", "SPANXA2", "SPANXA2-OT1", "SPANXB1", "SPANXC", "SPANXD", "RAC1", "EGFR", "EGFR-AS1", "SH3GL2")
 # create object of metadata names
 metaNames <- colnames(colData(fpkm))
 # replace column names
