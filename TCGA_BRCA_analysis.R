@@ -1,4 +1,4 @@
-# analyzing expression data from TCGA 
+#### analyzing expression data from TCGA ####
 
 # load packages
 library(dplyr)
@@ -16,12 +16,13 @@ hist(fpkmGene$SPANXB1) # very left skewed
 hist(fpkmGene$RAC1) # slightly left skewed
 hist(fpkmGene$EGFR) # very left skewed
 hist(fpkmGene$EGFR.AS1) # very left skewed
+hist(fpkmGene$SH3GL2) # very left skewed
 # save untransformed data
 fpkmGeneNolog <- fpkmGene
 
 # log transform gene expression data
-fpkmGene[1:9] <- fpkmGene[1:9] + 1 # add one pseudo count to all counts to remove zeros
-fpkmGene[1:9] <- log2(fpkmGene[1:9]) # apply log2 transformation
+fpkmGene[1:10] <- fpkmGene[1:10] + 1 # add one pseudo count to all counts to remove zeros
+fpkmGene[1:10] <- log2(fpkmGene[1:10]) # apply log2 transformation
 
 ## visualizing data distribution for variables of interest
 # not variable or not reported: classification_of_tumor, last_known_disease_status, tumor_grade, progression_or_recurrence, disease_type
@@ -29,6 +30,7 @@ hist(fpkmGene$SPANXB1) # left skewed (many zeros)
 hist(fpkmGene$RAC1) # fairly normal, slightly left skewed
 hist(fpkmGene$EGFR) # normal
 hist(fpkmGene$EGFR.AS1) # left skewed (many zeros)
+hist(fpkmGene$SH3GL2) # left skewed (many zeros)
 plot(fpkmGene$shortLetterCode) # same (abbreviations): plot(fpkmGene$definition)
 table(fpkmGene$shortLetterCode) 
 # 113 NT= normal tissue, 1102 TP= primary tumor, 7 TM= metastatic 
@@ -54,7 +56,7 @@ norm <- fpkmGene %>%
 tum <- fpkmGene %>%
   filter(shortLetterCode == "TP")
 
-## Q1 Compare spanxb1 expression between normal and BC patients
+#### Q1 Compare spanxb1 expression between normal and BC patients ####
 # all "normal" samples are paired with a Bca sample
 normVcancer <- rbind(norm, tum)
 # unpaired, all data
@@ -111,7 +113,7 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1paired.jpg")
 
-## Q2 Compare spanxb1 expression between metastatic vs. non metastatic BC patients
+#### Q2 Compare spanxb1 expression between metastatic vs. non metastatic BC patients ####
 # combine tumor and metastasis samples
 tumVmetaAll <- rbind(tum, meta)
 table(tumVmetaAll$shortLetterCode) # 7 TM 1102 TP
@@ -163,7 +165,7 @@ ggplot(tumVmetPaired, aes(shortLetterCode, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1pairedMetastasis.jpg")
 
-## Q3 Compare spanxb1 expression with clinical stages of BC patients
+#### Q3 Compare spanxb1 expression with clinical stages of BC patients ####
 table(fpkmGene$subtype_AJCC.Stage) # missing data are "[Not Available]"
 table(fpkmGene$tumor_stage) # missing data are "not reported"
 # compare AJCC stages
@@ -207,7 +209,7 @@ ggplot(stage, aes(tumor_stage, SPANXB1)) +
   theme_bw() 
 #ggsave("figures/SPANXB1.stage.jpg")
 
-## Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients
+#### Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients ####
 # extract triple negative from tumor samples
 TNBCneg <- tum %>% 
   filter(subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative") %>%
@@ -228,7 +230,7 @@ ggplot(TNBCboth, aes(triple, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1TNBC.jpg")
 
-## Q5 Compare spanxb1 expression between metastatic vs. non metastatic TNBC patients
+#### Q5 Compare spanxb1 expression between metastatic vs. non metastatic TNBC patients ####
 table(TNBCneg$shortLetterCode) #no TNBC neg or pos are metastatic
 
 ## Q6 Compare spanxb1 expression with survival outcome of TNBC patients
@@ -243,7 +245,7 @@ ggplot(TNBCneg, aes(vital_status, SPANXB1)) +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1.TNBCneg.vital.jpg")
 
-## Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (e.g., co-expression of genes)
+#### Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (e.g., co-expression of genes) ####
 table(TNBCpos$vital_status) # 52 alive, 7 dead 
 # SPANXB1 and vital status of triple positive patients
 t.test(SPANXB1 ~ vital_status, data=TNBCpos) # 0.9511
@@ -316,9 +318,9 @@ summary(SP.PR.ER.HER.mod) # nope
 # odds ratio and 95% CI
 exp(cbind(OR = coef(SP.HER.mod), confint(SP.HER.mod)))
 
-## Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC
+#### Q8 Compare RAC1/SPANXB1 expression together in normal vs. TNBC ####
 # aggregate data from norm and TNBC
-normTNBC <- rbind(norm, TNBCneg[,-94]) # removes column triple
+normTNBC <- rbind(norm, TNBCneg[,-95]) # removes column triple
 table(normTNBC$shortLetterCode) # 113 normal, 118 TNBC (unpaired)
 # linear regression (only normal)
 norm.mod <- lm(SPANXB1 ~ RAC1, data=norm)
@@ -363,10 +365,10 @@ ggplot(bothExp, aes(SPANXB1, RAC1, col=shortLetterCode)) +
   geom_smooth(data=subset(bothExp, shortLetterCode == "NT"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.RAC1.TNBC.filtered.jpg")
 
-## Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC
+#### Q9 Compare RAC1/SPANXB1 expression in metastatic vs. not met TNBC ####
 table(TNBCneg$shortLetterCode) #no TNBC neg are metastatic
 
-## Q10 Compare RAC1/SPANXB1 expression with survival of TNBC
+#### Q10 Compare RAC1/SPANXB1 expression with survival of TNBC ####
 table(TNBCneg$vital_status) # 100 alive, 18 dead
 # linear regression (only live)
 TNBClive <- TNBCneg %>%
@@ -394,7 +396,7 @@ summary(SP.RAC.mod) # nope
 # odds ratio and 95% CI
 exp(cbind(OR = coef(SP.RAC.mod), confint(SP.RAC.mod)))
 
-# Q11 Compare EGFR/SPANXB1 expression together in normal vs. TNBC
+#### Q11 Compare EGFR/SPANXB1 expression together in normal vs. TNBC ####
 table(normTNBC$shortLetterCode) # 113 normal, 118 TNBC (unpaired)
 # linear regression (only normal)
 norm.mod <- lm(SPANXB1 ~ EGFR, data=norm)
@@ -413,12 +415,77 @@ ggplot(normTNBC, aes(SPANXB1, EGFR, col=shortLetterCode)) +
   geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.EGFR.jpg")
 
-# Q12 Compare EGFR/SPANXB1 expression with survival of TNBC
+#### Q12 Compare EGFR/SPANXB1 expression with survival of TNBC ####
 # logistic regression 
 SP.EG.mod <- glm(vital_status ~ SPANXB1 + EGFR, data = TNBCneg, family = "binomial")
 summary(SP.EG.mod) # nope
 # odds ratio and 95% CI
-exp(cbind(OR = coef(SP.RAC.mod), confint(SP.RAC.mod)))
+exp(cbind(OR = coef(SP.EG.mod), confint(SP.EG.mod)))
+
+#### Compare SH3GL2/SPANXB1 expression together in normal vs. TNBC ####
+table(normTNBC$shortLetterCode) # 113 normal, 118 TNBC (unpaired)
+# linear regression (only normal)
+norm.mod <- lm(SPANXB1 ~ SH3GL2, data=norm)
+summary(norm.mod) # p=0.894, R2=0.004464 
+# linear regression (only TNBC)
+TNBCmod <- lm(SPANXB1 ~ SH3GL2, data=TNBCneg)
+summary(TNBCmod) # p=4.93e-08, R2=0.06464 
+# plot both together
+ggplot(normTNBC, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
+  geom_point() +
+  ylab("log2 SH3GL2 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=TNBC, red=normal
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
+ggsave("figures/SPANXB1.SH3GL2.jpg")
+
+#### Compare SH3GL2/SPANXB1 expression with survival of TNBC ####
+SP.SH.mod <- glm(vital_status ~ SPANXB1 + SH3GL2, data = TNBCneg, family = "binomial")
+summary(SP.SH.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.SH.mod), confint(SP.SH.mod)))
+
+#### Compare SH3GL2/SPANXB1 expression with survival in all cancer ####
+SP.SH.mod <- glm(vital_status ~ SPANXB1 + SH3GL2, data = normTNBC, family = "binomial")
+summary(SP.SH.mod) # nope
+# odds ratio and 95% CI
+exp(cbind(OR = coef(SP.SH.mod), confint(SP.SH.mod)))
+
+#### Compare survival in overexpressed SPANXB1
+# survival in all tumors
+SPover <- tum %>%
+  filter(SPANXB1 > 1)
+table(SPover$vital_status) # 446 live, 79 dead
+# perform test
+t.test(SPANXB1 ~ vital_status, data = SPover) # p=0.1338
+# boxplot of SPANXB1 by survival
+ggplot(SPover, aes(vital_status, SPANXB1)) + 
+  geom_boxplot() +
+  ylab("log2 SPANXB1 expression") +
+  xlab("survival of all patients") +
+  geom_boxplot() +
+  theme_bw() + 
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1overexpressSurvival.jpg")
+# survival in only TNBC
+SPoverTNBC <- TNBCboth %>%
+  filter(SPANXB1 > 1)
+table(SPoverTNBC$vital_status) # 68 live, 15 dead
+# perform test
+t.test(SPANXB1 ~ vital_status, data = SPoverTNBC) # p=0.3752
+# boxplot of SPANXB1 by survival
+ggplot(SPoverTNBC, aes(vital_status, SPANXB1)) + 
+  geom_boxplot() +
+  ylab("log2 SPANXB1 expression") +
+  xlab("survival of TNBC patients") +
+  geom_boxplot() +
+  theme_bw() + 
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1overexpressSurvivalTNBC.jpg")
+
+
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
 
