@@ -12,7 +12,7 @@ fpkmGene <- read.table("targetGeneBca.csv")
 # see all metadata
 colnames(fpkmGene)
 # view untransformed distribution
-hist(fpkmGene$SPANXB1) # very left skewed 
+hist(fpkmGene$SPANXB1) # very left skewed
 hist(fpkmGene$RAC1) # slightly left skewed
 hist(fpkmGene$EGFR) # very left skewed
 hist(fpkmGene$EGFR.AS1) # very left skewed
@@ -423,14 +423,27 @@ summary(SP.EG.mod) # nope
 exp(cbind(OR = coef(SP.EG.mod), confint(SP.EG.mod)))
 
 #### Compare SH3GL2/SPANXB1 expression together in normal vs. TNBC ####
-table(normTNBC$shortLetterCode) # 113 normal, 118 TNBC (unpaired)
-# linear regression (only normal)
+hist(norm$SPANXB1)
+hist(norm$SH3GL2)
+# coexpression in normal (113 samples)
 norm.mod <- lm(SPANXB1 ~ SH3GL2, data=norm)
-summary(norm.mod) # p=0.894, R2=0.004464 
-# linear regression (only TNBC)
-TNBCmod <- lm(SPANXB1 ~ SH3GL2, data=TNBCneg)
-summary(TNBCmod) # p=4.93e-08, R2=0.06464 
-# plot both together
+summary(norm.mod) # p=0.5118, R2=0.003887, not coexpressed in normal
+# coexpression in tumor (1102 samples)
+tum.mod <- lm(SPANXB1 ~ SH3GL2, data=tum)
+summary(tum.mod) # p=0.005938, R2=0.00686, coexpressed in tumor
+# coexpression in TNBC (118 samples)
+TNBC.mod <- lm(SPANXB1 ~ SH3GL2, data=TNBCneg)
+summary(TNBC.mod) # p=0.004334, R2=0.06803, coexpressed in TNBC
+
+#### Compare SH3GL2/SPANXB1 expression with survival ####
+TNBCboth$triple <- as.factor(TNBCboth$triple)
+# triple status given SPANXB1 and SH3GL2
+SP.SH.TNBC.mod <- glm(triple ~ SPANXB1 + SH3GL2, data=TNBCboth, family="binomial")
+summary(SP.SH.TNBC.mod) # nope
+# vital status given SPANXB1 and SH3GL2
+SP.SH.vital.mod <- glm(vital_status ~ SPANXB1 + SH3GL2, data = normTNBC, family = "binomial")
+summary(SP.SH.vital.mod) # nope
+# plot both genes together, color by tumor/normal
 ggplot(normTNBC, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
   geom_point() +
   ylab("log2 SH3GL2 expression") +
@@ -439,53 +452,58 @@ ggplot(normTNBC, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
   theme(legend.position="none") + # blue=TNBC, red=normal
   geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
-ggsave("figures/SPANXB1.SH3GL2.jpg")
-
-#### Compare SH3GL2/SPANXB1 expression with survival of TNBC ####
+#ggsave("figures/SPANXB1.SH3GL2.jpg")
+# plot both genes together if overexpressed
+SP.SH.pos <- rbind(norm, tum) %>%
+  filter(SPANXB1 > 1 & SH3GL2 > 1) #488 samples
+table(SP.SH.pos$shortLetterCode) # 16 normal, 472 tumor
+ggplot(SP.SH.pos, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
+  geom_point() +
+  ylab("log2 SH3GL2 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=TNBC, red=normal
+  geom_smooth(data=subset(SP.SH.pos, shortLetterCode == "TP"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(SP.SH.pos, shortLetterCode == "NT"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.SH3GL2.positive.jpg)
+# vital status given SPANXB1 in all TNBC
+t.test(SPANXB1 ~ vital_status, data = TNBCneg) # p=0.1257
+wilcox.test(SPANXB1 ~ vital_status, data = TNBCneg) # p=0.1225
+# vital status given SPANXB1 in only SPANXB1+ tumors
+SP.TNBC <- TNBCneg %>%
+  filter(SPANXB1 > 1)
+t.test(SPANXB1 ~ vital_status, data = SP.TNBC) # p=0.9059
+wilcox.test(SPANXB1 ~ vital_status, data = SP.TNBC) # p=0.955
+# vital status given SPANXB1 and SH3GL2 in all TNBC
 SP.SH.mod <- glm(vital_status ~ SPANXB1 + SH3GL2, data = TNBCneg, family = "binomial")
 summary(SP.SH.mod) # nope
 # odds ratio and 95% CI
 exp(cbind(OR = coef(SP.SH.mod), confint(SP.SH.mod)))
-
-#### Compare SH3GL2/SPANXB1 expression with survival in all cancer ####
-SP.SH.mod <- glm(vital_status ~ SPANXB1 + SH3GL2, data = normTNBC, family = "binomial")
-summary(SP.SH.mod) # nope
+# vital status given SPANXB1 and SH3GL2 in only SPANXB1+ TNBC tumors
+SP.SH.TNBC.mod <- glm(vital_status ~ SPANXB1 + SH3GL2, data = SP.TNBC, family = "binomial")
+summary(SP.SH.TNBC.mod) # nope
 # odds ratio and 95% CI
 exp(cbind(OR = coef(SP.SH.mod), confint(SP.SH.mod)))
-
-#### Compare survival in overexpressed SPANXB1
-# survival in all tumors
-SPover <- tum %>%
-  filter(SPANXB1 > 1)
-table(SPover$vital_status) # 446 live, 79 dead
-# perform test
-t.test(SPANXB1 ~ vital_status, data = SPover) # p=0.1338
-# boxplot of SPANXB1 by survival
-ggplot(SPover, aes(vital_status, SPANXB1)) + 
-  geom_boxplot() +
-  ylab("log2 SPANXB1 expression") +
-  xlab("survival of all patients") +
-  geom_boxplot() +
-  theme_bw() + 
-  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-#ggsave("figures/SPANXB1overexpressSurvival.jpg")
-# survival in only TNBC
-SPoverTNBC <- TNBCboth %>%
-  filter(SPANXB1 > 1)
-table(SPoverTNBC$vital_status) # 68 live, 15 dead
-# perform test
-t.test(SPANXB1 ~ vital_status, data = SPoverTNBC) # p=0.3752
-# boxplot of SPANXB1 by survival
-ggplot(SPoverTNBC, aes(vital_status, SPANXB1)) + 
-  geom_boxplot() +
-  ylab("log2 SPANXB1 expression") +
-  xlab("survival of TNBC patients") +
-  geom_boxplot() +
-  theme_bw() + 
-  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
-#ggsave("figures/SPANXB1overexpressSurvivalTNBC.jpg")
-
-
+# vital status of SPANXB1+/- and SH3GL2+/- in only TNBC
+SP.SH.table <- table(SP.TNBC$SH3GL2 >1, SP.TNBC$vital_status)
+chisq.test(SP.SH.table, simulate.p.value = TRUE) # 0.5667
+# vital status of SPANXB1+/- and SH3GL2+/- in all tumors
+SP.SH.pos <- tum %>% 
+  filter(SPANXB1 > 0 & SH3GL2 > 0) %>%
+  mutate(SP.SH = "positive") # 472
+SP.SH.neg <- tum %>% 
+  filter(SPANXB1 == 0 | SH3GL2 == 0) %>%
+  mutate(SP.SH = "negative")
+SP.SH <- rbind(SP.SH.pos, SP.SH.neg)
+SP.SH.tbl <- table(SP.SH$SP.SH, SP.SH$vital_status)
+chisq.test(SP.SH.tbl, simulate.p.value = TRUE) # p=0.5467
+# vital status of SPANXB1+/- and SH3GL2+/- in all tumors, strict comparison
+SP.SH.part <- tum %>%
+  filter(SPANXB1 ==0 & SH3GL2 ==0) %>%
+  mutate(SP.SH="negative")
+SP.SH2 <- rbind(SP.SH.pos, SP.SH.part)
+SP.SH.tbl2 <- table(SP.SH$SP.SH, SP.SH$vital_status)
+chisq.test(SP.SH.tbl2, simulate.p.value = TRUE) # p=0.5617
 
 ## use Wilcoxin signed-rank or Mann-Whitney for small sample sizes?
 
