@@ -465,7 +465,7 @@ ggplot(SP.SH.pos, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
   theme(legend.position="none") + # blue=TNBC, red=normal
   geom_smooth(data=subset(SP.SH.pos, shortLetterCode == "TP"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(SP.SH.pos, shortLetterCode == "NT"), method = "lm", se = FALSE)
-#ggsave("figures/SPANXB1.SH3GL2.positive.jpg)
+#ggsave("figures/SPANXB1.SH3GL2.positive.jpg")
 # vital status given SPANXB1 in all TNBC
 t.test(SPANXB1 ~ vital_status, data = TNBCneg) # p=0.1257
 wilcox.test(SPANXB1 ~ vital_status, data = TNBCneg) # p=0.1225
