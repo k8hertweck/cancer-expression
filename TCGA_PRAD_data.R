@@ -10,7 +10,8 @@ library(dplyr)
 # view data available for prostate cancer (TCGA-PRAD)
 TCGAbiolinks:::getProjectSummary("TCGA-PRAD")
 
-## clinical data (incomplete compared to metadata with Gene Expression?)
+#### Clinical data #### 
+# incomplete compared to metadata with Gene Expression?)
 # download and parse clinical data directly from TCGA
 clinical <- GDCquery_clinic(project = "TCGA-PRAD", type = "clinical")
 
@@ -21,6 +22,8 @@ table(clinical$vital_status) # 490 alive, 10 dead
 table(clinical$morphology) 
 clinical$days_to_death
 clinical$bcr_patient_barcode # patient 
+
+#### Gene expression ####
 
 ## FPKM expression data normalized for upper quartile (includes clinical metadata)
 ## aligned against Hg38
@@ -79,7 +82,7 @@ tfam <- grep("TFAM$", genes$external_gene_name, perl = TRUE)
 genes[tfam, ]
 # TFAM = ENSG00000108064
 
-##  assemble dataset for genes of interest and metadata
+## assemble dataset for genes of interest and metadata
 fpkmDat <- as.data.frame(t(assays(fpkm)[[1]])) # extract expression data
 colnames(fpkmDat) # print gene names
 rownames(fpkmDat) # show sample names
@@ -121,3 +124,5 @@ fpkmGene$race <- ifelse(fpkmGene$bcr_patient_barcode == "TCGA-HC-8262", "white",
 fpkmGene <- select(fpkmGene, -treatments)
 # save aggregated data to file
 write.table(fpkmGene, "targetGenePca.csv")
+
+#### Simple Nucelotide Variation ####
