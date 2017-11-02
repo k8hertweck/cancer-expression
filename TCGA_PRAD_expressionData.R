@@ -1,27 +1,17 @@
-# downloading and parsing data from TCGA 
+# downloading and parsing gene expression data from TCGA-PRAD (prostate cancer)
 
-# install TCGA bioconductor tools
-source("https://bioconductor.org/biocLite.R")
-biocLite("TCGAbiolinks")
+#install.packages("devtools")
+#library(devtools)
+#devtools::install_github("BioinformaticsFMRP/TCGAbiolinks")
 library(TCGAbiolinks)
+#source("https://bioconductor.org/biocLite.R")
+#BiocInstaller::biocLite("SummarizedExperiment")
 library(SummarizedExperiment)
+#install.packages("dplyr")
 library(dplyr)
 
 # view data available for prostate cancer (TCGA-PRAD)
 TCGAbiolinks:::getProjectSummary("TCGA-PRAD")
-
-#### Clinical data #### 
-# incomplete compared to metadata with Gene Expression?)
-# download and parse clinical data directly from TCGA
-clinical <- GDCquery_clinic(project = "TCGA-PRAD", type = "clinical")
-
-# inspecting variables of interest
-str(clinical) # 500 total records
-table(clinical$race) # 147 white, 7 black, 2 asian, 344 not reported
-table(clinical$vital_status) # 490 alive, 10 dead
-table(clinical$morphology) 
-clinical$days_to_death
-clinical$bcr_patient_barcode # patient 
 
 #### Gene expression ####
 
@@ -124,5 +114,3 @@ fpkmGene$race <- ifelse(fpkmGene$bcr_patient_barcode == "TCGA-HC-8262", "white",
 fpkmGene <- select(fpkmGene, -treatments)
 # save aggregated data to file
 write.table(fpkmGene, "targetGenePca.csv")
-
-#### Simple Nucelotide Variation ####
