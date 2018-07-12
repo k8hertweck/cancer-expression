@@ -69,7 +69,7 @@ ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
   theme_bw() + 
-  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+  theme(axis.text=element_text(size=16), axis.title = element_text(size=16))
 #ggsave("figures/SPANXB1unpaired.jpg")
 # paired
 # create paired sample dataset
@@ -110,7 +110,7 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
   theme_bw() +
-  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+  theme(axis.text=element_text(size=16), axis.title = element_text(size=16))
 #ggsave("figures/SPANXB1paired.jpg")
 
 #### Q2 Compare spanxb1 expression between metastatic vs. non metastatic BC patients ####
@@ -209,7 +209,27 @@ ggplot(stage, aes(tumor_stage, SPANXB1)) +
   theme_bw() 
 #ggsave("figures/SPANXB1.stage.jpg")
 
-#### Q4 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients ####
+#### Q4 Compare spanxb1 expression between normal and ER/PR/HER2 negative (a.k.a.TNBC) patients ####
+# extract triple negative from tumor samples
+TNBCneg <- tum %>% 
+  filter(subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative") %>%
+  mutate(triple = "TNBC")
+# convert norm to include TNBC status
+normT <- norm %>%
+  mutate(triple = "normal")
+# combine triple negative and normal
+normTNBC <- rbind(normT, TNBCneg) # 118 TNBC, 113 normal
+# perform t test 
+t.test(SPANXB1 ~ triple, data=normTNBC) # 4.395e-07
+ggplot(normTNBC, aes(triple, SPANXB1)) + 
+  ylab("log2 SPANXB1 expression") +
+  xlab("tissue type (unpaired)") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=16), axis.title = element_text(size=16))
+#ggsave("figures/SPANXB1TNBCnormal.jpg")
+
+#### Q4.5 Compare spanxb1 expression between ER/PR/HER2 positive vs. ER/PR/HER2 negative (a.k.a.TNBC) patients ####
 # extract triple negative from tumor samples
 TNBCneg <- tum %>% 
   filter(subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative") %>%
@@ -434,6 +454,26 @@ summary(tum.mod) # p=0.005938, R2=0.00686, coexpressed in tumor
 # coexpression in TNBC (118 samples)
 TNBC.mod <- lm(SPANXB1 ~ SH3GL2, data=TNBCneg)
 summary(TNBC.mod) # p=0.004334, R2=0.06803, coexpressed in TNBC
+# plot coexpression in normal vs tumor
+ggplot(normVcancer, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
+  geom_point() +
+  ylab("log2 SH3GL2 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=tumor, red=normal
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "NT"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.SH3GL2.tumor.jpg")
+# plot coexpression in normal vs TNBC
+ggplot(normTNBC, aes(SPANXB1, SH3GL2, col=triple)) +
+  geom_point() +
+  ylab("log2 SH3GL2 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=TNBC, red=normal
+  geom_smooth(data=subset(normTNBC, triple == "TNBC"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(normTNBC, triple == "normal"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.SH3GL2.TNBC.jpg")
 
 #### Compare SH3GL2/SPANXB1 expression with survival ####
 TNBCboth$triple <- as.factor(TNBCboth$triple)
