@@ -253,6 +253,59 @@ ggplot(TNBCboth, aes(triple, SPANXB1)) +
 #### Q5 Compare spanxb1 expression between metastatic vs. non metastatic TNBC patients ####
 table(TNBCneg$shortLetterCode) #no TNBC neg or pos are metastatic
 
+#### Compare spanxb1 expression with survival outcome ####
+tumVital <- tum %>%
+  filter(vital_status != "NA")
+table(tumVital$vital_status) # 100 alive, 18 dead 
+# SPANXB1 and vital status
+t.test(SPANXB1 ~ vital_status, data=tumVital) # 0.5902
+ggplot(tumVital, aes(vital_status, SPANXB1)) + 
+  ylab("log2 SPANXB1 expression") +
+  xlab("vital status") +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
+#ggsave("figures/SPANXB1.vital.jpg")
+
+# read in curated survival data
+surv_dat <- read.csv("brca_survival.csv")
+# compare samples in each set
+length(tum$patient) #1102
+length(unique(tum$patient)) #1091
+length(surv_dat$bcr_patient_barcode) #1097
+length(unique(surv_dat$bcr_patient_barcode)) #1097
+# filter out patients in tum that aren't in survival data
+surv <- merge(tum, surv_dat, by.x="patient", by.y="bcr_patient_barcode") %>%
+  filter(DFI.time.cr != "NA")
+range(surv$DFI.time.cr)
+
+# plot all SPANXB1 and DFI
+ggplot(surv, aes(SPANXB1, DFI.time.cr)) +
+  geom_point() +
+  ylab("disease free interval (days)") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + 
+  geom_smooth(method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.survival.jpg")
+# model with DFI
+surv.mod.D <- lm(SPANXB1 ~ DFI.time.cr, data=surv_ex)
+summary(surv.mod.D) # p=0.1759, R2=0.003988, no relationship
+
+# plot DFI by SPANXB1 only in expressed
+surv_ex <- filter(surv, SPANXB1 > 0)
+ggplot(surv_ex, aes(SPANXB1, DFI.time.cr)) +
+  geom_point() +
+  ylab("disease free interval (days)") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + 
+  geom_smooth(method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.ex.survival.jpg")
+# model with DFI
+surv.mod.D.ex <- lm(SPANXB1 ~ DFI.time.cr, data=surv_ex)
+summary(surv.mod.D.ex) # p=0.1759, R2=0.003988, no relationship
+
 ## Q6 Compare spanxb1 expression with survival outcome of TNBC patients
 table(TNBCneg$vital_status) # 100 alive, 18 dead 
 # SPANXB1 and vital status
@@ -475,6 +528,20 @@ ggplot(normTNBC, aes(SPANXB1, SH3GL2, col=triple)) +
   geom_smooth(data=subset(normTNBC, triple == "normal"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.SH3GL2.TNBC.jpg")
 
+#### Compare SH3GL2/SPANXB1 expression together in primary tumor vs. metastatic ####
+# coexpression in metastatic (7 samples)
+meta.mod <- lm(SPANXB1 ~ SH3GL2, data=meta)
+summary(meta.mod) # p=0.2932, R2=0.2162, not coexpressed in metastatic
+ggplot(tumVmetaAll, aes(SPANXB1, SH3GL2, col=shortLetterCode)) + 
+  geom_point() +
+  ylab("log2 SH3GL2 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  theme(legend.position="none") + # blue=primary tumor, red=metastatic
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "TP"), method = "lm", se = FALSE) +
+  geom_smooth(data=subset(normTNBC, shortLetterCode == "TM"), method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1unpairedMetastasis.jpg")
+
 #### Compare SH3GL2/SPANXB1 expression with survival ####
 TNBCboth$triple <- as.factor(TNBCboth$triple)
 # triple status given SPANXB1 and SH3GL2
@@ -483,7 +550,7 @@ summary(SP.SH.TNBC.mod) # nope
 # vital status given SPANXB1 and SH3GL2
 SP.SH.vital.mod <- glm(vital_status ~ SPANXB1 + SH3GL2, data = normTNBC, family = "binomial")
 summary(SP.SH.vital.mod) # nope
-# plot both genes together, color by tumor/normal
+# plot both genes, color by survival
 ggplot(normTNBC, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
   geom_point() +
   ylab("log2 SH3GL2 expression") +
