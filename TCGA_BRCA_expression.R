@@ -24,6 +24,10 @@ fpkmGeneNolog <- fpkmGene
 fpkmGene[1:10] <- fpkmGene[1:10] + 1 # add one pseudo count to all counts to remove zeros
 fpkmGene[1:10] <- log2(fpkmGene[1:10]) # apply log2 transformation
 
+# add SH3GL2/SPANXB1 expression ratio
+fpkmGene <- fpkmGene %>%
+  mutate(SH3GL2_SPANXB1_ratio = SH3GL2 / SPANXB1)
+
 ## visualizing data distribution for variables of interest
 # not variable or not reported: classification_of_tumor, last_known_disease_status, tumor_grade, progression_or_recurrence, disease_type
 hist(fpkmGene$SPANXB1) # left skewed (many zeros)
@@ -306,7 +310,7 @@ ggplot(surv_ex, aes(SPANXB1, DFI.time.cr)) +
 surv.mod.D.ex <- lm(SPANXB1 ~ DFI.time.cr, data=surv_ex)
 summary(surv.mod.D.ex) # p=0.1759, R2=0.003988, no relationship
 
-## Q6 Compare spanxb1 expression with survival outcome of TNBC patients
+#### Q6 Compare spanxb1 expression with survival outcome of TNBC patients ####
 table(TNBCneg$vital_status) # 100 alive, 18 dead 
 # SPANXB1 and vital status
 t.test(SPANXB1 ~ vital_status, data=TNBCneg) # 0.1257
@@ -527,6 +531,39 @@ ggplot(normTNBC, aes(SPANXB1, SH3GL2, col=triple)) +
   geom_smooth(data=subset(normTNBC, triple == "TNBC"), method = "lm", se = FALSE) +
   geom_smooth(data=subset(normTNBC, triple == "normal"), method = "lm", se = FALSE)
 #ggsave("figures/SPANXB1.SH3GL2.TNBC.jpg")
+# plot coexpression in tumor only
+tum_above <- tum %>%
+  filter(SH3GL2 > 0 & SPANXB1 > 0)
+ggplot(tum_above, aes(SPANXB1, SH3GL2)) +
+  geom_point() +
+  ylab("log2 SH3GL2 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  geom_smooth(method = "lm", se = FALSE)
+# plot coexpression in TNBC only 
+TNBC_above <- TNBCneg %>%
+  filter(SH3GL2 > 0 & SPANXB1 > 0)
+ggplot(TNBC_above, aes(SPANXB1, SH3GL2)) +
+  geom_point() +
+  ylab("log2 SH3GL2 expression") +
+  xlab("log2 SPANXB1 expression") +
+  theme_bw() +
+  geom_smooth(method = "lm", se = FALSE)
+# expression ratios: normal v tumor
+t.test(SH3GL2_SPANXB1_ratio ~ shortLetterCode, data = normVcancer) 
+ggplot(normVcancer, aes(SH3GL2_SPANXB1_ratio, fill = shortLetterCode)) +
+  geom_density(alpha = 0.5) +
+  xlab("SH3GL2:SPANXB1 expression ratio") + # red = normal, blue = tumor
+  scale_fill_discrete(guide=FALSE) +
+  theme_bw()
+#ggsave("figures/expressionRatioNormVtum.jpg")
+# expression ratios: TNBC
+ggplot(TNBCboth, aes(SH3GL2_SPANXB1_ratio, fill = triple)) +
+  geom_density(alpha = 0.5) +
+  xlab("SH3GL2:SPANXB1 expression ratio") + # red = TNBC, blue = all positive
+  scale_fill_discrete(guide=FALSE) +
+  theme_bw()
+#ggsave("figures/expressionRatioTNBC.jpg")
 
 #### Compare SH3GL2/SPANXB1 expression together in primary tumor vs. metastatic ####
 # coexpression in metastatic (7 samples)
@@ -625,3 +662,4 @@ chisq.test(SP.SH.tbl2, simulate.p.value = TRUE) # p=0.5617
 # permute labels on samples at random 1000 times
 # recalculate test statistic for each of 1000 permuted datasets
 # calculate percentage of permuted test statistics exceed original
+
