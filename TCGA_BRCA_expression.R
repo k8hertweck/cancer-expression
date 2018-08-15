@@ -549,9 +549,19 @@ ggplot(TNBC_above, aes(SPANXB1, SH3GL2)) +
   xlab("log2 SPANXB1 expression") +
   theme_bw() +
   geom_smooth(method = "lm", se = FALSE)
-# expression ratios: normal v tumor
-t.test(SH3GL2_SPANXB1_ratio ~ shortLetterCode, data = normVcancer) 
-ggplot(normVcancer, aes(SH3GL2_SPANXB1_ratio, fill = shortLetterCode)) +
+
+#### expression ratios ####
+# expression ratios: 1102 total in tumor 
+length(tum$SH3GL2_SPANXB1_ratio[tum$SH3GL2_SPANXB1_ratio == "Inf"]) # 537 with SPANXB1 = 0
+length(tum$SH3GL2_SPANXB1_ratio[tum$SH3GL2_SPANXB1_ratio == 0]) # 93 with SH3GL2 = 0
+length(tum$SH3GL2_SPANXB1_ratio[tum$SH3GL2_SPANXB1_ratio == "NaN"]) # 40 with 0 for both
+
+
+filter(normVcancer, SH3GL2_SPANXB1_ratio != "Inf")
+
+
+#t.test(SH3GL2_SPANXB1_ratio ~ shortLetterCode, data = normVcancer) # Inf values don't allow
+ggplot(normVcancer_trim, aes(SH3GL2_SPANXB1_ratio, fill = shortLetterCode)) +
   geom_density(alpha = 0.5) +
   xlab("SH3GL2:SPANXB1 expression ratio") + # red = normal, blue = tumor
   scale_fill_discrete(guide=FALSE) +
