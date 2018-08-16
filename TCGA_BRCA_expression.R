@@ -321,6 +321,18 @@ ggplot(TNBCneg, aes(vital_status, SPANXB1)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1.TNBCneg.vital.jpg")
+# TNBC and survival data
+TNBCneg_stage <- stage %>% 
+  filter(shortLetterCode == "TP" & subtype_ER.Status == "Negative" & subtype_PR.Status == "Negative" & subtype_HER2.Final.Status == "Negative")
+table(TNBCneg_stage$tumor_stage)
+summary(aov(SPANXB1 ~ tumor_stage, data = TNBCneg_stage)) #p=0.0205
+ggplot(TNBCneg_stage, aes(tumor_stage, SPANXB1)) + 
+  ylab("log2 SPANXB1 expression") +
+  xlab("tumor stage") +
+  scale_x_discrete(labels=c("stage i" = "I", "stage ia" = "IA", "stage ib" = "IB", "stage ii" = "II", "stage iia" = "IIA", "stage iib" = "IIB", "stage iii" = "III", "stage iiia" = "IIIA", "stage iiib" = "IIIB", "stage iiic" = "IIIC", "stage iv" = "IV")) +
+  geom_boxplot() +
+  theme_bw() 
+#ggsave("figures/SPANXB1.TNBC.stage.jpg")
 
 #### Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (e.g., co-expression of genes) ####
 table(TNBCpos$vital_status) # 52 alive, 7 dead 
@@ -541,33 +553,16 @@ ggplot(tum_above, aes(SPANXB1, SH3GL2)) +
   theme_bw() +
   geom_smooth(method = "lm", se = FALSE)
 # plot coexpression in TNBC only 
-TNBC_above <- TNBCneg %>%
-  filter(SH3GL2 > 0 & SPANXB1 > 0)
-ggplot(TNBC_above, aes(SPANXB1, SH3GL2)) +
+ggplot(TNBCneg, aes(SPANXB1, SH3GL2)) +
   geom_point() +
   ylab("log2 SH3GL2 expression") +
   xlab("log2 SPANXB1 expression") +
   theme_bw() +
   geom_smooth(method = "lm", se = FALSE)
+#ggsave("figures/SPANXB1.SH3GL2.TNBCneg.jpg")
+# testing coexpression of SH3GL2=0 with SPANXB1 expressed
 
-#### expression ratios ####
-# expression ratios: 1102 total in tumor 
-length(tum$SH3GL2_SPANXB1_ratio[tum$SH3GL2_SPANXB1_ratio == "Inf"]) # 537 with SPANXB1 = 0
-length(tum$SH3GL2_SPANXB1_ratio[tum$SH3GL2_SPANXB1_ratio == 0]) # 93 with SH3GL2 = 0
-length(tum$SH3GL2_SPANXB1_ratio[tum$SH3GL2_SPANXB1_ratio == "NaN"]) # 40 with 0 for both
-
-
-filter(normVcancer, SH3GL2_SPANXB1_ratio != "Inf")
-
-
-#t.test(SH3GL2_SPANXB1_ratio ~ shortLetterCode, data = normVcancer) # Inf values don't allow
-ggplot(normVcancer_trim, aes(SH3GL2_SPANXB1_ratio, fill = shortLetterCode)) +
-  geom_density(alpha = 0.5) +
-  xlab("SH3GL2:SPANXB1 expression ratio") + # red = normal, blue = tumor
-  scale_fill_discrete(guide=FALSE) +
-  theme_bw()
-#ggsave("figures/expressionRatioNormVtum.jpg")
-# expression ratios: TNBC
+# expression ratios: TNBC vs pos
 ggplot(TNBCboth, aes(SH3GL2_SPANXB1_ratio, fill = triple)) +
   geom_density(alpha = 0.5) +
   xlab("SH3GL2:SPANXB1 expression ratio") + # red = TNBC, blue = all positive
