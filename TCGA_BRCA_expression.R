@@ -554,12 +554,12 @@ ggplot(tum_above, aes(SPANXB1, SH3GL2)) +
   geom_smooth(method = "lm", se = FALSE)
 # plot coexpression in TNBC only 
 ggplot(TNBCneg, aes(SPANXB1, SH3GL2)) +
-  geom_point() +
+  geom_jitter(width = 0.1, height = 0.1) +
   ylab("log2 SH3GL2 expression") +
   xlab("log2 SPANXB1 expression") +
   theme_bw() +
-  geom_smooth(method = "lm", se = FALSE)
-#ggsave("figures/SPANXB1.SH3GL2.TNBCneg.jpg")
+  geom_smooth(method = "lm")
+#ggsave("figures/SPANXB1.SH3GL2.TNBCneg.jpg") #IN MANUSCRIPT
 # testing coexpression of SH3GL2=0 with SPANXB1 expressed
 
 # expression ratios: TNBC vs pos
