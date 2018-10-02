@@ -331,8 +331,9 @@ ggplot(TNBCneg_stage, aes(tumor_stage, SPANXB1)) +
   xlab("tumor stage") +
   scale_x_discrete(labels=c("stage i" = "I", "stage ia" = "IA", "stage ib" = "IB", "stage ii" = "II", "stage iia" = "IIA", "stage iib" = "IIB", "stage iii" = "III", "stage iiia" = "IIIA", "stage iiib" = "IIIB", "stage iiic" = "IIIC", "stage iv" = "IV")) +
   geom_boxplot() +
+  geom_jitter(alpha = 0.3) +
   theme_bw() 
-#ggsave("figures/SPANXB1.TNBC.stage.jpg")
+#ggsave("figures/SPANXB1.TNBC.stage.jpg") # IN MANUSCRIPT
 # grouping stage into two categories, stage I-II and III-IV
 two_stage <- select(TNBCneg_stage, SPANXB1, tumor_stage)
 levels(two_stage$tumor_stage)
@@ -343,7 +344,7 @@ levels(two_stage$tumor_stage)
 levels(two_stage$tumor_stage)[3:7] <- "stage III-IV"
 table(two_stage$tumor_stage) # 98 stage I-II, 22 stage III-IV
 # test for difference between stage categories
-t.test(SPANXB1 ~ tumor_stage, data=two_stage) # 0.04379
+t.test(SPANXB1 ~ tumor_stage, data=two_stage) # 0.04379, IN MANUSCRIPT
 
 #### Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (e.g., co-expression of genes) ####
 table(TNBCpos$vital_status) # 52 alive, 7 dead 
