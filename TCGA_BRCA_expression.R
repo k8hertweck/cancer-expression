@@ -532,8 +532,9 @@ summary(norm.mod) # p=0.5118, R2=0.003887, not coexpressed in normal
 tum.mod <- lm(SPANXB1 ~ SH3GL2, data=tum)
 summary(tum.mod) # p=0.005938, R2=0.00686, coexpressed in tumor
 # coexpression in TNBC (118 samples)
-TNBC.mod <- lm(SPANXB1 ~ SH3GL2, data=TNBCneg)
+TNBC.mod <- lm(SPANXB1 ~ SH3GL2, data=TNBCneg)  #IN MANUSCRIPT
 summary(TNBC.mod) # p=0.004334, R2=0.06803, coexpressed in TNBC
+confint(TNBC.mod, 'SH3GL2', level=0.95)
 # plot coexpression in normal vs tumor
 ggplot(normVcancer, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
   geom_point() +
