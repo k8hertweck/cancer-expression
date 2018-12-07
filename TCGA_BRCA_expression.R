@@ -72,6 +72,7 @@ ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) +
   xlab("tissue type (unpaired)") +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
+  geom_jitter(alpha = 0.3) +
   theme_bw() + 
   theme(axis.text=element_text(size=16), axis.title = element_text(size=16))
 #ggsave("figures/SPANXB1unpaired.jpg")
@@ -113,6 +114,7 @@ ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) +
   xlab("tissue type (paired samples)") +
   scale_x_discrete(labels=c("NT" = "normal", "TP" = "tumor")) +
   geom_boxplot() +
+  geom_jitter(alpha = 0.3) +
   theme_bw() +
   theme(axis.text=element_text(size=16), axis.title = element_text(size=16))
 #ggsave("figures/SPANXB1paired.jpg")
@@ -229,6 +231,7 @@ ggplot(normTNBC, aes(triple, SPANXB1)) +
   ylab("log2 SPANXB1 expression") +
   xlab("tissue type (unpaired)") +
   geom_boxplot() +
+  geom_jitter(alpha = 0.3) +
   theme_bw() +
   theme(axis.text=element_text(size=16), axis.title = element_text(size=16))
 #ggsave("figures/SPANXB1TNBCnormal.jpg")
@@ -297,7 +300,9 @@ surv.mod.D <- lm(SPANXB1 ~ DFI.time.cr, data=surv_ex)
 summary(surv.mod.D) # p=0.1759, R2=0.003988, no relationship
 
 # plot DFI by SPANXB1 only in expressed
-surv_ex <- filter(surv, SPANXB1 > 0)
+surv_ex <- surv %>%
+  filter(SPANXB1 > 0) %>%
+  mutate(SPANXB1binary = "expressed")
 ggplot(surv_ex, aes(SPANXB1, DFI.time.cr)) +
   geom_point() +
   ylab("disease free interval (days)") +
