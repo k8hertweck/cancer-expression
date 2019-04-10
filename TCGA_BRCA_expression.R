@@ -691,3 +691,8 @@ chisq.test(SP.SH.tbl2, simulate.p.value = TRUE) # p=0.5617
 # recalculate test statistic for each of 1000 permuted datasets
 # calculate percentage of permuted test statistics exceed original
 
+# Hypothesis: MDA-9 and SIRPA are overexpressed in AA subjects and predict poor disease outcome.
+#### MDA-9/Syntenin expression in AA vs. CA and whether high MDA-9/Syntenin expression predicts poor outcome in AA and or vs. CA ####
+
+
+#### SIRPA expression in AA vs. CA and whether high SIRPA expression predicts poor outcome in AA and or vs. CA.####
