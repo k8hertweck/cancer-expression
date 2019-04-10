@@ -65,6 +65,7 @@ tum <- fpkmGene %>%
 normVcancer <- rbind(norm, tum)
 # unpaired, all data
 t.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=2.2e-16
+wilcox.test(SPANXB1 ~ shortLetterCode, data = normVcancer) # p=4.677e-12
 table(normVcancer$shortLetterCode) # 113 normal, 1102 tumor
 ggplot(normVcancer, aes(shortLetterCode, SPANXB1)) + 
   geom_boxplot() +
@@ -109,6 +110,7 @@ normVcancerPaired <- normVcancerPaired[order(normVcancerPaired$patient),]
 table(normVcancerPaired$shortLetterCode) # 112 NT, 112 TP
 # perform t test (paired)
 t.test(SPANXB1 ~ shortLetterCode, paired=TRUE, data = normVcancerPaired) # 4.177e-09
+wilcox.test(SPANXB1 ~ shortLetterCode, paired=TRUE, data = normVcancerPaired) # 7.244e-08
 ggplot(normVcancerPaired, aes(shortLetterCode, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
   xlab("tissue type (paired samples)") +
@@ -227,6 +229,7 @@ normT <- norm %>%
 normTNBC <- rbind(normT, TNBCneg) # 118 TNBC, 113 normal
 # perform t test 
 t.test(SPANXB1 ~ triple, data=normTNBC) # 4.395e-07
+wilcox.test(SPANXB1 ~ triple, data=normTNBC) # 1.24e-06
 ggplot(normTNBC, aes(triple, SPANXB1)) + 
   ylab("log2 SPANXB1 expression") +
   xlab("tissue type (unpaired)") +
@@ -350,6 +353,7 @@ levels(two_stage$tumor_stage)[3:7] <- "stage III-IV"
 table(two_stage$tumor_stage) # 98 stage I-II, 22 stage III-IV
 # test for difference between stage categories
 t.test(SPANXB1 ~ tumor_stage, data=two_stage) # 0.04379, IN MANUSCRIPT
+wilcox.test(SPANXB1 ~ tumor_stage, data=two_stage) # 0.01005, IN MANUSCRIPT
 
 #### Q7 Compare spanxb1 expression with survival outcome of ER/PR/HER2 positive patients alone and in combination (e.g., co-expression of genes) ####
 table(TNBCpos$vital_status) # 52 alive, 7 dead 
@@ -541,6 +545,7 @@ summary(tum.mod) # p=0.005938, R2=0.00686, coexpressed in tumor
 TNBC.mod <- lm(SPANXB1 ~ SH3GL2, data=TNBCneg)  #IN MANUSCRIPT
 summary(TNBC.mod) # p=0.004334, R2=0.06803, coexpressed in TNBC
 confint(TNBC.mod, 'SH3GL2', level=0.95)
+cor.test(TNBCneg$SPANXB1, TNBCneg$SH3GL2, method="pearson") #p=0.004334
 # plot coexpression in normal vs tumor
 ggplot(normVcancer, aes(SPANXB1, SH3GL2, col=shortLetterCode)) +
   geom_point() +
