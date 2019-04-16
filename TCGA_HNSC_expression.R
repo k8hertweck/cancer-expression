@@ -44,8 +44,8 @@ BW_nonhis <- fpkmGene %>%
 
 #### MDA-9/Syntenin ####
 
-# high expression in AA is correlated with poor outcome when compared to non-hispanic whites
-# vital status
+## high expression in AA is correlated with poor outcome when compared to non-hispanic whites
+## compare vital status based on MDA9
 t.test(MDA9 ~ vital_status, data=BW_nonhis) # 0.004855
 ggplot(BW_nonhis, aes(vital_status, MDA9)) + 
   ylab("log2 MDA9 expression") +
@@ -54,8 +54,32 @@ ggplot(BW_nonhis, aes(vital_status, MDA9)) +
   geom_jitter(alpha = 0.3) +
   theme_bw() 
 #ggsave("figures/MDA9BW_nonhis_vital_.jpg")
-# kaplan meier
-https://genomicsclass.github.io/book/pages/tcga.html
+
+## kaplan meier: days to last followup
+# remove missing data 
+BW_nonhis_km <- BW_nonhis %>%
+  filter(!is.na(days_to_last_follow_up)) 
+BW_nonhis_km <- BW_nonhis_km %>% 
+  mutate(vital = (as.numeric(vital_status)) - 1)
+# fit model
+mda9_fit <- survfit(Surv(days_to_last_follow_up, 
+                    vital) ~ race, 
+               data = BW_nonhis_km)
+# Visualize with survminer
+ggsurvplot(mda9_fit, data = BW_nonhis_km, risk.table = TRUE)
+
+## kaplan meier: days to death
+# remove missing data 
+BW_nonhis_km <- BW_nonhis %>%
+  filter(!is.na(days_to_death)) 
+BW_nonhis_km <- BW_nonhis_km %>% 
+  mutate(vital = (as.numeric(vital_status)) - 1)
+# fit model
+mda9_fit <- survfit(Surv(days_to_death, 
+                         vital) ~ race, 
+                    data = BW_nonhis_km)
+# Visualize with survminer
+ggsurvplot(mda9_fit, data = BW_nonhis_km, risk.table = TRUE)
 
 # high expression in HIS is correlated with poor outcome when compared to non-hispanic whites
 # vital status
