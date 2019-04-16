@@ -3,6 +3,8 @@
 # load packages
 library(dplyr)
 library(ggplot2)
+library(survminer)
+library(survival)
 
 # define exclusion subsetting
 `%ni%` <- Negate(`%in%`) 
@@ -55,31 +57,56 @@ ggplot(BW_nonhis, aes(vital_status, MDA9)) +
   theme_bw() 
 #ggsave("figures/MDA9BW_nonhis_vital_.jpg")
 
-## kaplan meier: days to last followup
+# KM from TCGA biolinks
+#TCGAbiolinks::TCGAanalyze_SurvivalKM()
+
+## kaplan meier: days to last followup, comparing AA and CA
 # remove missing data 
 BW_nonhis_km <- BW_nonhis %>%
   filter(!is.na(days_to_last_follow_up)) 
 BW_nonhis_km <- BW_nonhis_km %>% 
   mutate(vital = (as.numeric(vital_status)) - 1)
 # fit model
-mda9_fit <- survfit(Surv(days_to_last_follow_up, 
+mda9_fit_BW_nonhis_follow <- survfit(Surv(days_to_last_follow_up, 
                     vital) ~ race, 
                data = BW_nonhis_km)
-# Visualize with survminer
-ggsurvplot(mda9_fit, data = BW_nonhis_km, risk.table = TRUE)
+ggsurvplot(mda9_fit_BW_nonhis_follow, data = BW_nonhis_km, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(1600, 0.8),
+           pval.method.coord = c(1600, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 2000),
+           break.time.by = 500,
+           ggtheme = theme_minimal(),
+           risk.table.y.text.col = T,
+           risk.table.y.text = FALSE)
 
-## kaplan meier: days to death
+## kaplan meier: days to death, comparing AA and CA
 # remove missing data 
 BW_nonhis_km <- BW_nonhis %>%
   filter(!is.na(days_to_death)) 
 BW_nonhis_km <- BW_nonhis_km %>% 
   mutate(vital = (as.numeric(vital_status)) - 1)
 # fit model
-mda9_fit <- survfit(Surv(days_to_death, 
+mda9_fit_BW_nonhis_death <- survfit(Surv(days_to_death, 
                          vital) ~ race, 
                     data = BW_nonhis_km)
-# Visualize with survminer
-ggsurvplot(mda9_fit, data = BW_nonhis_km, risk.table = TRUE)
+ggsurvplot(mda9_fit_BW_nonhis_death, 
+           data = BW_nonhis_km, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 3000),
+           break.time.by = 500,
+           ggtheme = theme_minimal(),
+           risk.table.y.text.col = T,
+           risk.table.y.text = FALSE)
+
 
 # high expression in HIS is correlated with poor outcome when compared to non-hispanic whites
 # vital status

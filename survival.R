@@ -1,6 +1,7 @@
 # example kaplan-meier code
 # https://genomicsclass.github.io/book/pages/tcga.html
 # https://github.com/kassambara/survminer
+# https://cran.r-project.org/web/packages/survminer/index.html
 # https://www.biostars.org/p/267016/
 # https://www.biostars.org/p/300304/#300420 (cox models)
 
@@ -25,6 +26,7 @@ clin <- clin %>%
 ?Surv # Create a survival object, usually used as a response variable in a model formula.
 ?survfit # creates survival curves from a formula (e.g. the Kaplan-Meier)
 ?ggsurvplot
+?TCGAanalyze_SurvivalKM
 
 # survival plot
 # create event, or status indicator: 0=alive, 1=dead
