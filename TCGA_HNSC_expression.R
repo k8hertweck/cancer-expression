@@ -83,7 +83,7 @@ ggsurvplot(mda9_fit_BW_nonhis_follow, data = BW_nonhis_km,
            risk.table.y.text.col = T,
            risk.table.y.text = FALSE)
 
-## kaplan meier: days to death, comparing AA and CA
+## kaplan meier: days to death, comparing AA and CA (better than days to last followup)
 # remove missing data 
 BW_nonhis_km <- BW_nonhis %>%
   filter(!is.na(days_to_death)) 
@@ -106,13 +106,14 @@ ggsurvplot(mda9_fit_BW_nonhis_death,
            ggtheme = theme_minimal(),
            risk.table.y.text.col = T,
            risk.table.y.text = FALSE)
+#ggsave("figures/AA_CA_days_to_death.jpeg)
 # splitting into high and low gene expression
 BW_nonhis_km <- BW_nonhis_km %>%
   mutate(mda9_hl = MDA9 > median(MDA9))
 BW_nonhis_km$mda9_hl[BW_nonhis_km$mda9_hl == TRUE] <- "high"
 BW_nonhis_km$mda9_hl[BW_nonhis_km$mda9_hl == FALSE] <- "low"
-# AA and CA, high and low
-mda9_fit_BW_nonhis_death_gene <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
+# AA vs CA, high and low gene expression
+mda9_fit_BW_nonhis_death_gene <- survfit(Surv(days_to_death, vital) ~ mda9_hl + race, 
                                     data = BW_nonhis_km)
 ggsurvplot(mda9_fit_BW_nonhis_death_gene, 
            data = BW_nonhis_km, 
@@ -127,8 +128,14 @@ ggsurvplot(mda9_fit_BW_nonhis_death_gene,
            ggtheme = theme_minimal(),
            risk.table.y.text.col = T,
            risk.table.y.text = FALSE)
-# AA, high and low (median from all gene expression)
-AA_nonhis_km <- filter(BW_nonhis_km, race == "black or african american")
+#ggsave("figures/AA_CA_days_to_death_MDA9.jpg)
+# AA only, high and low (median from only AA)
+AA_nonhis_km <- BW_nonhis_km %>%
+  filter(race == "black or african american") %>%
+  select(-mda9_hl) %>%
+  mutate(mda9_hl = MDA9 > median(MDA9))
+AA_nonhis_km$mda9_hl[AA_nonhis_km$mda9_hl == TRUE] <- "high"
+AA_nonhis_km$mda9_hl[AA_nonhis_km$mda9_hl == FALSE] <- "low"
 mda9_fit_AA_nonhis_death_gene <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
                                          data = AA_nonhis_km)
 ggsurvplot(mda9_fit_AA_nonhis_death_gene, 
@@ -144,7 +151,6 @@ ggsurvplot(mda9_fit_AA_nonhis_death_gene,
            ggtheme = theme_minimal(),
            risk.table.y.text.col = T,
            risk.table.y.text = FALSE)
-
 
 # high expression in HIS is correlated with poor outcome when compared to non-hispanic whites
 # vital status
