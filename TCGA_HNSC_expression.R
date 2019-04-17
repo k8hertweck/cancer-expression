@@ -106,6 +106,44 @@ ggsurvplot(mda9_fit_BW_nonhis_death,
            ggtheme = theme_minimal(),
            risk.table.y.text.col = T,
            risk.table.y.text = FALSE)
+# splitting into high and low gene expression
+BW_nonhis_km <- BW_nonhis_km %>%
+  mutate(mda9_hl = MDA9 > median(MDA9))
+BW_nonhis_km$mda9_hl[BW_nonhis_km$mda9_hl == TRUE] <- "high"
+BW_nonhis_km$mda9_hl[BW_nonhis_km$mda9_hl == FALSE] <- "low"
+# AA and CA, high and low
+mda9_fit_BW_nonhis_death_gene <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
+                                    data = BW_nonhis_km)
+ggsurvplot(mda9_fit_BW_nonhis_death_gene, 
+           data = BW_nonhis_km, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 3000),
+           break.time.by = 500,
+           ggtheme = theme_minimal(),
+           risk.table.y.text.col = T,
+           risk.table.y.text = FALSE)
+# AA, high and low (median from all gene expression)
+AA_nonhis_km <- filter(BW_nonhis_km, race == "black or african american")
+mda9_fit_AA_nonhis_death_gene <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
+                                         data = AA_nonhis_km)
+ggsurvplot(mda9_fit_AA_nonhis_death_gene, 
+           data = AA_nonhis_km, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 3000),
+           break.time.by = 500,
+           ggtheme = theme_minimal(),
+           risk.table.y.text.col = T,
+           risk.table.y.text = FALSE)
 
 
 # high expression in HIS is correlated with poor outcome when compared to non-hispanic whites
@@ -120,7 +158,7 @@ ggplot(his_nonhis, aes(vital_status, MDA9)) +
 #ggsave("figures/MDA9his_nonhis_vital.jpg") 
 # days to death
 
-#### SIRPA ####
+#### SIRPA: not needed right now ####
 
 # high expression in AA is correlated with poor outcome when compared to non-hispanic whites
 t.test(SIRPA ~ vital_status, data=BW_nonhis) # 0.3977
