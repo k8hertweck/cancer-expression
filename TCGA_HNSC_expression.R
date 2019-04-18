@@ -53,7 +53,6 @@ ggplot(BW_nonhis, aes(vital_status, MDA9)) +
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(alpha = 0.3) +
   theme_bw() 
-#ggsave("figures/MDA9BW_nonhis_vital_.jpg")
 
 # KM from TCGA biolinks
 #TCGAbiolinks::TCGAanalyze_SurvivalKM()
@@ -131,7 +130,7 @@ ggsurvplot(BW_nonhis_death_mda9_fit,
            risk.table.y.text = FALSE,
            legend.labs = c("high", "low")
            )
-#ggsave("figures/days_to_death_MDA9.jpg")
+#ggsave("figures/days_to_death_MDA9_AA_CA.jpg")
 # AA vs CA, high and low gene expression
 BW_nonhis_death_mda9_fit <- survfit(Surv(days_to_death, vital) ~ mda9_hl + race, 
                                     data = BW_nonhis_death)
@@ -155,14 +154,108 @@ ggsurvplot(BW_nonhis_death_mda9_fit,
 
 # high expression in HIS is correlated with poor outcome when compared to non-hispanic whites
 # vital status
-t.test(MDA9 ~ vital_status, data=his_nonhis) # 0.004231
+t.test(MDA9 ~ vital_status, data=his_nonhis) # 0.0008478
 ggplot(his_nonhis, aes(vital_status, MDA9)) + 
   ylab("log2 MDA9 expression") +
   xlab("vital status") +
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(alpha = 0.3) +
   theme_bw() 
-#ggsave("figures/MDA9his_nonhis_vital.jpg")
+
+## kaplan meier: days to last followup, comparing his and nonhis
+# remove missing data 
+his_nonhis_follow <- his_nonhis %>%
+  filter(!is.na(days_to_last_follow_up)) 
+his_nonhis_follow <- his_nonhis_follow %>% 
+  mutate(vital = (as.numeric(vital_status)) - 1)
+# fit model
+his_nonhis_follow_fit <- survfit(Surv(days_to_last_follow_up, 
+                                     vital) ~ ethnicity, 
+                                data = his_nonhis_follow)
+ggsurvplot(his_nonhis_follow_fit, data = his_nonhis_follow, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(1600, 0.8),
+           pval.method.coord = c(1600, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 2000),
+           break.time.by = 500,
+           ggtheme = theme_minimal(),
+           risk.table.y.text.col = T,
+           risk.table.y.text = FALSE)
+
+## kaplan meier: days to death, comparing his and nonhis (better than days to last followup)
+# remove missing data 
+his_nonhis_death <- his_nonhis %>%
+  filter(!is.na(days_to_death)) 
+his_nonhis_death <- his_nonhis_death %>% 
+  mutate(vital = (as.numeric(vital_status)) - 1)
+# fit model
+his_nonhis_death_fit <- survfit(Surv(days_to_death, 
+                                    vital) ~ ethnicity, 
+                               data = his_nonhis_death)
+ggsurvplot(his_nonhis_death_fit, 
+           data = his_nonhis_death, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 3000),
+           break.time.by = 500,
+           xlab = "days to death",
+           ggtheme = theme_bw(),
+           risk.table.y.text.col = T,
+           risk.table.y.text = FALSE,
+           legend.labs = c("hispanic", "not hispanic"))
+#ggsave("figures/his_nonhis_days_to_death.jpeg") # width 700, height 525
+# splitting into high and low gene expression
+his_nonhis_death <- his_nonhis_death %>%
+  mutate(mda9_hl = MDA9 > median(MDA9))
+his_nonhis_death$mda9_hl[his_nonhis_death$mda9_hl == TRUE] <- "high"
+his_nonhis_death$mda9_hl[his_nonhis_death$mda9_hl == FALSE] <- "low"
+# high and low gene expression
+his_nonhis_death_mda9_fit <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
+                                    data = his_nonhis_death)
+ggsurvplot(his_nonhis_death_mda9_fit, 
+           data = his_nonhis_death, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 3000),
+           break.time.by = 500,
+           xlab = "days to death",
+           ggtheme = theme_bw(),
+           risk.table.y.text.col = TRUE,
+           risk.table.y.text = FALSE,
+           legend.labs = c("high", "low")
+)
+#ggsave("figures/days_to_death_MDA9_hisnonhis.jpg")
+# his vs non, high and low gene expression
+his_nonhis_death_mda9_fit <- survfit(Surv(days_to_death, vital) ~ mda9_hl + ethnicity, 
+                                    data = his_nonhis_death)
+ggsurvplot(his_nonhis_death_mda9_fit, 
+           data = his_nonhis_death, 
+           palette = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c"),
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 3000),
+           break.time.by = 500,
+           xlab = "days to death",
+           ggtheme = theme_minimal(),
+           risk.table.y.text.col = TRUE,
+           risk.table.y.text = FALSE, 
+           legend.labs = c("hispanic, high", "not hispanic, high", "hispanic, low", "not hispanic, low"))
+#ggsave("figures/his_nonhis_days_to_death_MDA9.jpg")
 
 #### SIRPA: not needed right now ####
 
