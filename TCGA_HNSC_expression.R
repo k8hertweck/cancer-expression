@@ -33,20 +33,20 @@ table(fpkmGene$ethnicity) # 27 HIS, 480 not (some overlap with AA?)
 # extract tumor data
 tum <- fpkmGene %>%
   filter(shortLetterCode == "TP")
+# extracting AA and white who are not HIS
+BW_nonhis <- tum %>%
+  filter(race == "white" | race == "black or african american") %>%
+  filter(ethnicity == "not hispanic or latino")
 # extracting whites with known HIS
-his_nonhis <- fpkmGene %>%
+his_nonhis <- tum %>%
   filter(race == "white") %>%
   filter(ethnicity == "hispanic or latino" | ethnicity == "not hispanic or latino") 
-# extracting AA and white who are not HIS
-BW_nonhis <- fpkmGene %>%
-  filter(race == "white" | race == "black or african american") %>%
-  filter(ethnicity == "not hispanic or latino") 
 
 #### MDA-9/Syntenin ####
 
 ## high expression in AA is correlated with poor outcome when compared to non-hispanic whites
 ## compare vital status based on MDA9
-t.test(MDA9 ~ vital_status, data=BW_nonhis) # 0.004855
+t.test(MDA9 ~ vital_status, data=BW_nonhis) # 0.001108
 ggplot(BW_nonhis, aes(vital_status, MDA9)) + 
   ylab("log2 MDA9 expression") +
   xlab("vital status") +
