@@ -7,9 +7,6 @@ library(survminer)
 library(survival)
 library(viridis)
 
-# define exclusion subsetting
-`%ni%` <- Negate(`%in%`) 
-
 #### data pre-processing ####
 
 # read in saved data
@@ -63,15 +60,15 @@ ggplot(BW_nonhis, aes(vital_status, MDA9)) +
 
 ## kaplan meier: days to last followup, comparing AA and CA
 # remove missing data 
-BW_nonhis__follow <- BW_nonhis %>%
+BW_nonhis_follow <- BW_nonhis %>%
   filter(!is.na(days_to_last_follow_up)) 
-BW_nonhis_follow <- BW_nonhis_km %>% 
+BW_nonhis_follow <- BW_nonhis_follow %>% 
   mutate(vital = (as.numeric(vital_status)) - 1)
 # fit model
-mda9_fit_BW_nonhis_follow <- survfit(Surv(days_to_last_follow_up, 
+BW_nonhis_follow_fit <- survfit(Surv(days_to_last_follow_up, 
                     vital) ~ race, 
-               data = BW_nonhis_km)
-ggsurvplot(mda9_fit_BW_nonhis_follow, data = BW_nonhis_km, 
+               data = BW_nonhis_follow)
+ggsurvplot(BW_nonhis_follow_fit, data = BW_nonhis_follow, 
            risk.table = TRUE,
            pval = TRUE,
            pval.method = TRUE,
@@ -86,16 +83,16 @@ ggsurvplot(mda9_fit_BW_nonhis_follow, data = BW_nonhis_km,
 
 ## kaplan meier: days to death, comparing AA and CA (better than days to last followup)
 # remove missing data 
-BW_nonhis_km <- BW_nonhis %>%
+BW_nonhis_death <- BW_nonhis %>%
   filter(!is.na(days_to_death)) 
-BW_nonhis_km <- BW_nonhis_km %>% 
+BW_nonhis_death <- BW_nonhis_death %>% 
   mutate(vital = (as.numeric(vital_status)) - 1)
 # fit model
 BW_nonhis_death_fit <- survfit(Surv(days_to_death, 
                          vital) ~ race, 
-                    data = BW_nonhis_km)
+                    data = BW_nonhis_death)
 ggsurvplot(BW_nonhis_death_fit, 
-           data = BW_nonhis_km, 
+           data = BW_nonhis_death, 
            risk.table = TRUE,
            pval = TRUE,
            pval.method = TRUE,
@@ -104,22 +101,22 @@ ggsurvplot(BW_nonhis_death_fit,
            conf.int = TRUE,
            xlim = c(0, 3000),
            break.time.by = 500,
+           xlab = "days to death",
            ggtheme = theme_bw(),
            risk.table.y.text.col = T,
            risk.table.y.text = FALSE,
-           legend.labs = c("AA", "CA")) +
-  labs(title = "African American vs Caucasian for days to death")
+           legend.labs = c("AA", "CA"))
 #ggsave("figures/AA_CA_days_to_death.jpeg") # width 700, height 525
 # splitting into high and low gene expression
-BW_nonhis_km <- BW_nonhis_km %>%
+BW_nonhis_death <- BW_nonhis_death %>%
   mutate(mda9_hl = MDA9 > median(MDA9))
-BW_nonhis_km$mda9_hl[BW_nonhis_km$mda9_hl == TRUE] <- "high"
-BW_nonhis_km$mda9_hl[BW_nonhis_km$mda9_hl == FALSE] <- "low"
+BW_nonhis_death$mda9_hl[BW_nonhis_death$mda9_hl == TRUE] <- "high"
+BW_nonhis_death$mda9_hl[BW_nonhis_death$mda9_hl == FALSE] <- "low"
 # high and low gene expression
-mda9_fit_nonhis_death_mda9 <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
-                                         data = BW_nonhis_km)
-ggsurvplot(mda9_fit_nonhis_death_mda9, 
-           data = BW_nonhis_km, 
+BW_nonhis_death_mda9_fit <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
+                                         data = BW_nonhis_death)
+ggsurvplot(BW_nonhis_death_mda9_fit, 
+           data = BW_nonhis_death, 
            risk.table = TRUE,
            pval = TRUE,
            pval.method = TRUE,
@@ -128,18 +125,18 @@ ggsurvplot(mda9_fit_nonhis_death_mda9,
            conf.int = TRUE,
            xlim = c(0, 3000),
            break.time.by = 500,
+           xlab = "days to death",
            ggtheme = theme_bw(),
            risk.table.y.text.col = TRUE,
            risk.table.y.text = FALSE,
            legend.labs = c("high", "low")
-           )  +
-  labs(title = "high vs low MDA9 expression for days to death")
+           )
 #ggsave("figures/days_to_death_MDA9.jpg")
 # AA vs CA, high and low gene expression
-BW_nonhis_death_fit_mda9 <- survfit(Surv(days_to_death, vital) ~ mda9_hl + race, 
-                                    data = BW_nonhis_km)
-ggsurvplot(BW_nonhis_death_fit_mda9, 
-           data = BW_nonhis_km, 
+BW_nonhis_death_mda9_fit <- survfit(Surv(days_to_death, vital) ~ mda9_hl + race, 
+                                    data = BW_nonhis_death)
+ggsurvplot(BW_nonhis_death_mda9_fit, 
+           data = BW_nonhis_death, 
            palette = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c"),
            risk.table = TRUE,
            pval = TRUE,
@@ -149,34 +146,12 @@ ggsurvplot(BW_nonhis_death_fit_mda9,
            conf.int = TRUE,
            xlim = c(0, 3000),
            break.time.by = 500,
+           xlab = "days to death",
            ggtheme = theme_minimal(),
            risk.table.y.text.col = TRUE,
            risk.table.y.text = FALSE, 
-           legend.labs = c("AA, high", "CA, high", "AA, low", "CA, low"))  +
-  labs(title = "AA vs Caucasian and high vs low MDA9 expression for days to death")
+           legend.labs = c("AA, high", "CA, high", "AA, low", "CA, low"))
 #ggsave("figures/AA_CA_days_to_death_MDA9.jpg")
-# AA only, high and low (median from only AA)
-AA_nonhis_km <- BW_nonhis_km %>%
-  filter(race == "black or african american") %>%
-  select(-mda9_hl) %>%
-  mutate(mda9_hl = MDA9 > median(MDA9))
-AA_nonhis_km$mda9_hl[AA_nonhis_km$mda9_hl == TRUE] <- "high"
-AA_nonhis_km$mda9_hl[AA_nonhis_km$mda9_hl == FALSE] <- "low"
-mda9_fit_AA_nonhis_death_mda9 <- survfit(Surv(days_to_death, vital) ~ mda9_hl, 
-                                         data = AA_nonhis_km)
-ggsurvplot(mda9_fit_AA_nonhis_death_mda9, 
-           data = AA_nonhis_km, 
-           risk.table = TRUE,
-           pval = TRUE,
-           pval.method = TRUE,
-           pval.coord = c(2000, 0.8),
-           pval.method.coord = c(2000, 0.9),
-           conf.int = TRUE,
-           xlim = c(0, 3000),
-           break.time.by = 500,
-           ggtheme = theme_minimal(),
-           risk.table.y.text.col = T,
-           risk.table.y.text = FALSE)
 
 # high expression in HIS is correlated with poor outcome when compared to non-hispanic whites
 # vital status
@@ -187,8 +162,7 @@ ggplot(his_nonhis, aes(vital_status, MDA9)) +
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(alpha = 0.3) +
   theme_bw() 
-#ggsave("figures/MDA9his_nonhis_vital.jpg") 
-# days to death
+#ggsave("figures/MDA9his_nonhis_vital.jpg")
 
 #### SIRPA: not needed right now ####
 
