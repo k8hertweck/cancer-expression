@@ -1,11 +1,8 @@
 #### head and neck expression analysis ####
 
 # load packages
-library(dplyr)
-library(ggplot2)
-library(survminer)
-library(survival)
-library(viridis)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, survminer, survival, viridis)
 
 #### data pre-processing ####
 
