@@ -26,6 +26,11 @@ hist(fpkmGene$MDA9)
 table(fpkmGene$shortLetterCode) # 44 NT, 2 TM, 500 TP
 table(fpkmGene$race) # 49 AA, 468 white
 table(fpkmGene$ethnicity) # 27 HIS, 480 not (some overlap with AA?)
+table(fpkmGene$classification_of_tumor) # not reported
+table(fpkmGene$tumor_stage) # not reported, stage i - ivc
+table(fpkmGene$tumor_grade) # not reported
+table(fpkmGene$progression_or_recurrence) # not reported
+table(fpkmGene$shortLetterCode) # only 2 metastasis
 
 # extract tumor data
 tum <- fpkmGene %>%
@@ -50,6 +55,50 @@ ggplot(BW_nonhis, aes(vital_status, MDA9)) +
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(alpha = 0.3) +
   theme_bw() 
+
+## MDA-9 expression in AA/CA by tumor stage
+BW_nonhis_levels <- BW_nonhis %>%
+  filter(tumor_stage != "not reported") %>%
+  droplevels()
+race_summary <- BW_nonhis_levels %>%  
+  group_by(race, tumor_stage, .drop=FALSE) %>%
+  tally()
+ggplot(BW_nonhis_levels, aes(x = tumor_stage, y = MDA9, color=race)) +
+  ylab("log2 MDA9 expression") +
+  xlab("tumor stage") +
+  scale_x_discrete(labels=c("stage i" = "I", "stage ii" = "II", "stage iii" = "III", "stage iva" = "IVA", "stage ivb" = "IVB", "stage ivc" = "IVC")) +
+  geom_boxplot() +
+  geom_text(data=filter(race_summary, race=="black or african american"), 
+            aes(tumor_stage, Inf, label = n), vjust=2, hjust=2) +
+  geom_text(data=filter(race_summary, race=="white"), 
+            aes(tumor_stage, Inf, label = n), vjust=2, hjust=-0.5) +
+  theme_bw() +
+  theme(axis.text.x = element_text(size=12)) +
+  theme(axis.title.y = element_text(size=12))
+#ggsave("figures/AA_CA_tumor_stage.jpeg", width = 8)
+table(BW_nonhis$tumor_stage, BW_nonhis$race)
+
+## MDA-9 expression in CA/HIS by tumor stage
+his_nonhis_levels <- his_nonhis %>%
+  filter(tumor_stage != "not reported", tumor_stage != "stage ivc") %>%
+  droplevels()
+ethnicity_summary <- his_nonhis_levels %>% 
+  group_by(ethnicity, tumor_stage, .drop=FALSE) %>%
+  tally()
+ggplot(his_nonhis_levels, aes(tumor_stage, MDA9, color=ethnicity)) +
+  ylab("log2 MDA9 expression") +
+  xlab("tumor stage") +
+  scale_x_discrete(labels=c("stage i" = "I", "stage ii" = "II", "stage iii" = "III", "stage iva" = "IVA", "stage ivb" = "IVB")) +
+  geom_boxplot() +
+  geom_text(data=filter(ethnicity_summary, ethnicity=="hispanic or latino"), 
+            aes(tumor_stage, Inf, label = n), vjust=2, hjust=2) +
+  geom_text(data=filter(ethnicity_summary, ethnicity=="not hispanic or latino"), 
+            aes(tumor_stage, Inf, label = n), vjust=2, hjust=-0.5) +
+  theme_bw()  +
+  theme(axis.text.x = element_text(size=12)) +
+  theme(axis.title.y = element_text(size=12))  
+#ggsave("figures/his_nonhis_tumor_stage.jpeg", width = 7)
+table(his_nonhis$tumor_stage, his_nonhis$ethnicity)
 
 # KM from TCGA biolinks
 #TCGAbiolinks::TCGAanalyze_SurvivalKM()
