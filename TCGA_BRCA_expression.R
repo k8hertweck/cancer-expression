@@ -1,11 +1,11 @@
 #### analyzing expression data from TCGA ####
 
 # load packages
-library(dplyr)
-library(ggplot2)
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, survminer, survival, viridis)
 
-# define exclusion subsetting
-`%ni%` <- Negate(`%in%`) 
+# source multi-use functions
+source("TCGA_functions.R")
 
 # read in saved data
 fpkmGene <- read.table("targetGeneBca.csv")
@@ -276,6 +276,89 @@ ggplot(tumVital, aes(vital_status, SPANXB1)) +
   theme_bw() +
   theme(axis.text=element_text(size=12), axis.title = element_text(size=12))
 #ggsave("figures/SPANXB1.vital.jpg")
+
+#### SPANXB1 survival in AA vs CA, all tumors ####
+# extract AA and CA
+BW_nonhis <- AAvsCA(fpkmGene)
+# remove missing data 
+BW_nonhis_death <- BW_nonhis %>%
+  filter(!is.na(days_to_death)) 
+BW_nonhis_death <- BW_nonhis_death %>% 
+  mutate(vital = (as.numeric(vital_status)) - 1)
+# fit model
+BW_nonhis_death_fit <- survfit(Surv(days_to_death, 
+                                    vital) ~ race, 
+                               data = BW_nonhis_death)
+ggsurvplot(BW_nonhis_death_fit, 
+           data = BW_nonhis_death, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 5000),
+           break.time.by = 500,
+           xlab = "days to death",
+           ggtheme = theme_bw(),
+           risk.table.y.text.col = T,
+           risk.table.y.text = FALSE,
+           legend.labs = c("AA", "CA"))
+# splitting into high and low gene expression
+BW_nonhis_death <- BW_nonhis_death %>%
+  mutate(SPANXB1_hl = SPANXB1 > median(SPANXB1))
+BW_nonhis_death$SPANXB1_hl[BW_nonhis_death$SPANXB1_hl == TRUE] <- "high"
+BW_nonhis_death$SPANXB1_hl[BW_nonhis_death$SPANXB1_hl == FALSE] <- "low"
+# high and low gene expression
+BW_nonhis_death_spanxb1_fit <- survfit(Surv(days_to_death, vital) ~ SPANXB1_hl, 
+                                    data = BW_nonhis_death)
+ggsurvplot(BW_nonhis_death_spanxb1_fit, 
+           data = BW_nonhis_death, 
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 5000),
+           break.time.by = 500,
+           xlab = "days to death",
+           ggtheme = theme_bw(),
+           risk.table.y.text.col = TRUE,
+           risk.table.y.text = FALSE,
+           legend.labs = c("high", "low")
+)
+# AA vs CA, high and low gene expression
+BW_nonhis_death_spanxb1_fit <- survfit(Surv(days_to_death, vital) ~ SPANXB1_hl + race, 
+                                    data = BW_nonhis_death)
+ggsurvplot(BW_nonhis_death_spanxb1_fit, 
+           data = BW_nonhis_death, 
+           palette = c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c"),
+           risk.table = TRUE,
+           pval = TRUE,
+           pval.method = TRUE,
+           pval.coord = c(2000, 0.8),
+           pval.method.coord = c(2000, 0.9),
+           conf.int = TRUE,
+           xlim = c(0, 5000),
+           break.time.by = 500,
+           xlab = "days to death",
+           ggtheme = theme_minimal(),
+           risk.table.y.text.col = TRUE,
+           risk.table.y.text = FALSE, 
+           legend.labs = c("AA, high", "CA, high", "AA, low", "CA, low"))
+#ggsave("figures/AA_CA_days_to_death_SPANXB1.jpg")
+
+
+#### SPANXB1 survival in AA vs CA, TNBC ####
+# extract AA and CA
+BW_nonhis_TNBC <- AAvsCA(TNBCneg)
+# remove missing data 
+BW_nonhis_death_TNBC <- BW_nonhis_TNBC %>%
+  filter(!is.na(days_to_death)) 
+BW_nonhis_death_TNBC <- BW_nonhis_death_TNBC %>% 
+  mutate(vital = (as.numeric(vital_status)) - 1)
+# only 14 samples
 
 # read in curated survival data
 surv_dat <- read.csv("brca_survival.csv")
